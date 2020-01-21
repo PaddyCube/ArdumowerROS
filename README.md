@@ -18,6 +18,13 @@ Because all these tasks need lot of computing power which Arduino doesn't provid
 # Current state of development
 nothing developed so far, still learning ROS
 
+# Content of repository
+This repository contains (will contain) 
+- Ardumower firmware
+- ROS packages
+- URDF for simulation
+- files and instructions to build an ArdumowerTurlebot as R&D platform
+
 # Next steps
 - build a test platform (real robot) using Ardumower Hardware (PCB)
 - create new firmware (based on latest Azurit) by dropping all behaviors, simplify it to be ROS enabled
