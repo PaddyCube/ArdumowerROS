@@ -24,7 +24,8 @@ String Robot::waitStringConsole() {
 }
 
 
-void Robot::printInfo(Stream &s){
+// ROS need to be replaced with ROS debug info?
+/* void Robot::printInfo(Stream &s){
   
   /*Console.print(millis()/1000);
   Console.print(",");
@@ -33,7 +34,7 @@ void Robot::printInfo(Stream &s){
   Console.print(motorMowRpmCurr);
   Console.print(",");
   Console.println(motorMowPWMCurr);
-  return;*/
+  return;
   //Console.println(time2str(datetime.time));
 
   if (consoleMode == CONSOLE_OFF) {
@@ -87,7 +88,7 @@ void Robot::printInfo(Stream &s){
     Streamprint(s, "%s\r\n", name.c_str());                  
   }
  }
-}
+} */
 
 
 void Robot::printMenu(){  
@@ -120,7 +121,7 @@ void Robot::delayInfo(int ms){
   unsigned long endtime = millis() +ms;
   while (millis() < endtime){
     readSensors();
-    printInfo(Console);
+   // printInfo(Console);
     delay(1000);
   }
 }
@@ -264,10 +265,11 @@ void Robot::menu(){
   char ch;  
   printMenu();  
   while(true){
-    if (!rmcsUse){    
+    // ROS?
+/*     if (!rmcsUse){    
    
        resetIdleTime();
-    }
+    } */
     imu.update();
     if (Console.available() > 0) {
       ch = (char)Console.read();            
@@ -434,6 +436,7 @@ void Robot::commsMenuSelect(void) {
   }
 }
 
+// ROS only read serial during setup
 void Robot::readSerial() {
   // serial input  
   if (Console.available() > 0) {     
@@ -444,9 +447,9 @@ void Robot::readSerial() {
        return;
      }
      char ch = cmd[0];
-     if (!rmcsUse){
+   //  if (!rmcsUse){
         resetIdleTime();
-     }
+    // }
      switch (ch){
        case 'd': 
          menu(); // menu
@@ -509,16 +512,12 @@ void Robot::readSerial() {
          // press '0' for OFF
          setNextState(STATE_OFF,0);                             
          break;
-       case '1':       
+      /*  case '1':       
          // press '1' for Automode         
          motorMowEnable = true;
          //motorMowModulate = false;                                           
          setNextState(STATE_FORWARD,0);          
-         break; 
-      // New commands for RMCS protocol
-      case '$':
-        processRMCSCommand(cmd); 
-         break;
+         break;  */
 	 }
   }    
 }

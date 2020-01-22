@@ -1002,9 +1002,10 @@ void RemoteControl::sendCommandMenu(boolean update){
   if (update) serialPort->print("{:"); else serialPort->print(F("{.Commands`5000"));
   serialPort->print(F("|ro~OFF|ra~Auto mode|rc~RC mode|"));
   serialPort->print(F("rm~Mowing is "));
-  sendOnOff(robot->motorMowEnable);  
-  serialPort->print(F("|rp~Pattern is "));
-  serialPort->print(robot->mowPatternName());
+  sendOnOff(robot->motorMowEnable); 
+  // ROS removed 
+ /*  serialPort->print(F("|rp~Pattern is "));
+  serialPort->print(robot->mowPatternName()); */
   serialPort->print(F("|rh~Home|rk~Track|rs~State "));
   serialPort->print(robot->stateName());
 	serialPort->print(F("|rb~Battery "));
@@ -1061,7 +1062,8 @@ void RemoteControl::processCommandMenu(String pfodCmd){
     sendCommandMenu(true);
   } else if (pfodCmd == "rp"){
     // cmd: pattern
-    robot->mowPatternCurr = (robot->mowPatternCurr + 1 ) % 3;      
+    // ROS removed
+   // robot->mowPatternCurr = (robot->mowPatternCurr + 1 ) % 3;      
     robot->setNextState(STATE_OFF, 0);            
     sendCommandMenu(true);
   } else if (pfodCmd == "r1"){

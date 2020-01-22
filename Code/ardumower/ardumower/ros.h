@@ -2,7 +2,8 @@
 // NOTE: use high baud rates for this serial interface (in mower.h, configure CONSOLE_BAUDRATE to 115200 baud)
 
 void Robot::rosSerial() {
-  // serial input    
+  // ROS complete rework needed
+ /*  // serial input    
   while (Console.available() > 0){    
     char ch = Console.read();
     if ((ch == '\r') || (ch == '\n')){                  
@@ -103,6 +104,6 @@ void Robot::rosSerial() {
     motorLeftSpeedRpmSet  = 0;
     motorRightSpeedRpmSet = 0;    
     motorMowSpeedPWMSet = 0;
-  }
+  } */
 }
 

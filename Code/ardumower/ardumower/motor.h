@@ -383,7 +383,7 @@ void Robot::motorControl(){
     int rightSpeed =min(motorSpeedMaxPwm, max(-motorSpeedMaxPwm, map(motorRightSpeedRpmSet, -motorSpeedMaxRpm, motorSpeedMaxRpm, -motorSpeedMaxPwm, motorSpeedMaxPwm)));
     if (millis() < stateStartTime + motorZeroSettleTime) {
       leftSpeed = rightSpeed = 0; // slow down at state start      
-      if (mowPatternCurr != MOW_LANES) imuDriveHeading = imu.ypr.yaw; // set drive heading    
+    /*   if (mowPatternCurr != MOW_LANES)  */imuDriveHeading = imu.ypr.yaw; // set drive heading    
     }
     setMotorPWM( leftSpeed, rightSpeed, true ); 
   }  
