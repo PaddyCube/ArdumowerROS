@@ -48,10 +48,10 @@ Mower::Mower(){
 		motorLeftPID.Kp            = 1.5;       // motor wheel PID controller
     motorLeftPID.Ki            = 0.29;
     motorLeftPID.Kd            = 0.25;
-    motorZeroSettleTime        = 3000 ;     // how long (ms) to wait for motors to settle at zero speed
-		motorReverseTime           = 1200;      // max. reverse time (ms)
-		motorRollTimeMax           = 1500;      // max. roll time (ms)
-		motorRollTimeMin           = 750;       // min. roll time (ms) should be smaller than motorRollTimeMax  
+    //motorZeroSettleTime        = 3000 ;     // how long (ms) to wait for motors to settle at zero speed
+		//motorReverseTime           = 1200;      // max. reverse time (ms)
+		//motorRollTimeMax           = 1500;      // max. roll time (ms)
+		//motorRollTimeMin           = 750;       // min. roll time (ms) should be smaller than motorRollTimeMax  
   #else // ROBOT_MINI		
 		motorPowerMax              = 2.0;         // motor wheel max power (Watt)			
 		motorSpeedMaxPwm           = 127;       // motor wheel max Pwm  (8-bit PWM=255, 10-bit PWM=1023)	  
@@ -59,17 +59,17 @@ Mower::Mower(){
 		motorLeftPID.Kp        		 = 0.2;       // motor wheel PID controller
     motorLeftPID.Ki            = 0.0;
     motorLeftPID.Kd            = 0.0;  
-    motorZeroSettleTime        = 0 ;        // how long (ms) to wait for motors to settle at zero speed
-		motorReverseTime           = 2200;      // max. reverse time (ms)
-		motorRollTimeMax           = 2000;      // max. roll time (ms)
-		motorRollTimeMin           = 750;       // min. roll time (ms) should be smaller than motorRollTimeMax  
+    //motorZeroSettleTime        = 0 ;        // how long (ms) to wait for motors to settle at zero speed
+		//motorReverseTime           = 2200;      // max. reverse time (ms)
+		//motorRollTimeMax           = 2000;      // max. roll time (ms)
+		//motorRollTimeMin           = 750;       // min. roll time (ms) should be smaller than motorRollTimeMax  
   #endif		
   motorSenseRightScale       = ADC2voltage(1)*1905;   // ADC to right motor sense milliamp 
 	motorSenseLeftScale        = ADC2voltage(1)*1905;   // ADC to left motor sense milliamp 
 	motorPowerIgnoreTime       = 2000;      // time to ignore motor power (ms)  
   motorForwTimeMax           = 80000;     // max. forward time (ms) / timeout
-  motorBiDirSpeedRatio1      = 0.3;       // bidir mow pattern speed ratio 1
-  motorBiDirSpeedRatio2      = 0.92;      // bidir mow pattern speed ratio 2
+ // motorBiDirSpeedRatio1      = 0.3;       // bidir mow pattern speed ratio 1
+ // motorBiDirSpeedRatio2      = 0.92;      // bidir mow pattern speed ratio 2
     
   motorRightSwapDir          = 0;          // inverse right motor direction? 
   motorLeftSwapDir           = 0;          // inverse left motor direction?
@@ -190,13 +190,13 @@ Mower::Mower(){
   
 	#if defined (ROBOT_ARDUMOWER)
 	  odometryTicksPerRevolution = 1060;       // encoder ticks per one full resolution (without any divider)
-		wheelDiameter              = 250;        // wheel diameter (mm)
-		odometryWheelBaseCm        = 36;         // wheel-to-wheel distance (cm)
+	//	wheelDiameter              = 250;        // wheel diameter (mm)
+	//	odometryWheelBaseCm        = 36;         // wheel-to-wheel distance (cm)
 		odoLeftRightCorrection     = true;       // left-right correction for straight lines?
   #else  // ROBOT_MINI		
 		odometryTicksPerRevolution = 20;      // encoder ticks per one full resolution
-		wheelDiameter              = 70;        // wheel diameter (mm)
-		odometryWheelBaseCm        = 14;         // wheel-to-wheel distance (cm)
+	//	wheelDiameter              = 70;        // wheel diameter (mm)
+	//	odometryWheelBaseCm        = 14;         // wheel-to-wheel distance (cm)
 		odoLeftRightCorrection     = false; 		 // left-right correction for straight lines?
 	#endif
 		
@@ -204,7 +204,7 @@ Mower::Mower(){
 		#define DIVIDER_DIP_SWITCH  2             //  sets used PCB odometry divider (2=DIV/2, 4=DIV/4, 8=DIV/8, etc.) 
 		odometryTicksPerRevolution /= DIVIDER_DIP_SWITCH;        // encoder ticks per one full resolution 
   #endif
-  odometryTicksPerCm         = ((float)odometryTicksPerRevolution) / (((float)wheelDiameter)/10.0) / (3.1415);    // computes encoder ticks per cm (do not change)
+  //odometryTicksPerCm         = ((float)odometryTicksPerRevolution) / (((float)wheelDiameter)/10.0) / (3.1415);    // computes encoder ticks per cm (do not change)
   
   // ----- GPS -------------------------------------------
   gpsUse                     = 0;          // use GPS?

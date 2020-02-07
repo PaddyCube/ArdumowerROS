@@ -140,7 +140,7 @@ enum {
   STATE_ROLL,         // drive roll right/left  
   STATE_REVERSE,      // drive reverse
 
-  STATE_CIRCLE,       // drive circle  
+//  STATE_CIRCLE,       // drive circle  
   STATE_ERROR,        // error
   STATE_PERI_FIND,    // perimeter find 
   STATE_PERI_TRACK,   // perimeter track
@@ -158,10 +158,12 @@ enum {
   STATE_PERI_OUT_REV,   // outside perimeter reverse driving without checkPerimeterBoundary()
   STATE_PERI_OUT_ROLL,   // outside perimeter rolling driving without checkPerimeterBoundary()
   STATE_TILT_STOP,    // tilt sensor activated, stop motors, wait for un-tilt
-  STATE_BUMPER_REVERSE,      // drive reverse
-  STATE_BUMPER_FORWARD,      // drive forward	
+//  STATE_BUMPER_REVERSE,      // drive reverse
+//  STATE_BUMPER_FORWARD,      // drive forward	
 };
 
+// roll types
+enum { LEFT, RIGHT };
 
 // console mode
 enum { CONSOLE_SENSOR_COUNTERS, CONSOLE_SENSOR_VALUES, CONSOLE_PERIMETER, CONSOLE_OFF };
@@ -210,11 +212,11 @@ class Robot
     int robotIsStuckCounter ;
     // -------- odometry state --------------------------
     char odometryUse       ;       // use odometry?
-    int wheelDiameter     ;        // wheel diameter (mm)
+    // int wheelDiameter     ;        // wheel diameter (mm)
     char twoWayOdometrySensorUse;  // use optional two-wire odometry sensor?
     int odometryTicksPerRevolution ;   // encoder ticks per one full resolution
-    float odometryTicksPerCm ;  // encoder ticks per cm
-    float odometryWheelBaseCm ;    // wheel-to-wheel distance (cm)
+    //float odometryTicksPerCm ;  // encoder ticks per cm
+    //float odometryWheelBaseCm ;    // wheel-to-wheel distance (cm)
     bool odometryRightSwapDir;       // inverse right encoder direction?
     bool odometryLeftSwapDir;       // inverse left encoder direction?        
     int odometryLeft ;   // left wheel counter
@@ -223,9 +225,9 @@ class Robot
     boolean odometryLeftLastState2;
     boolean odometryRightLastState;
     boolean odometryRightLastState2;
-    float odometryTheta; // theta angle (radiant)
-    float odometryX ;   // X map position (cm)
-    float odometryY ;   // Y map position (cm)    
+    //float odometryTheta; // theta angle (radiant)
+    //float odometryX ;   // X map position (cm)
+    //float odometryY ;   // Y map position (cm)    
     float motorLeftRpmCurr ; // left wheel rpm    
     float motorRightRpmCurr ; // right wheel rpm    
     unsigned long lastMotorRpmTime ;     
@@ -262,12 +264,12 @@ class Robot
     PID motorRightPID;              // motor right wheel PID controller
     float motorSenseRightScale ; // motor right sense scale (mA=(ADC-zero)/scale)
     float motorSenseLeftScale ; // motor left sense scale  (mA=(ADC-zero)/scale)
-    int motorRollTimeMax ;  // max. roll time (ms)
-    int motorRollTimeMin  ; // min. roll time (ms)
-    int motorReverseTime ;  // max. reverse time (ms)
+    //int motorRollTimeMax ;  // max. roll time (ms)
+    //int motorRollTimeMin  ; // min. roll time (ms)
+    //int motorReverseTime ;  // max. reverse time (ms)
     long motorForwTimeMax; // max. forward time (ms) / timeout
-    float motorBiDirSpeedRatio1 ;   // bidir mow pattern speed ratio 1
-    float motorBiDirSpeedRatio2 ;   // bidir mow pattern speed ratio 2
+    //float motorBiDirSpeedRatio1 ;   // bidir mow pattern speed ratio 1
+    //float motorBiDirSpeedRatio2 ;   // bidir mow pattern speed ratio 2
     bool motorRightSwapDir     ;    // inverse right motor direction? 
     bool motorLeftSwapDir      ;    // inverse left motor direction?  
     int motorLeftSpeedRpmSet ; // set speed
@@ -564,12 +566,12 @@ protected:
     virtual void readSerial();    
     
     // Linux ROS
-    //virtual void rosSerial();    
+    virtual void rosSerial();    
     
     // check sensor
     virtual void checkButton();
     virtual void checkBattery();
-    virtual void checkTimer();
+    //virtual void checkTimer();
     virtual void checkCurrent();
     virtual void checkBumpers();
     virtual void checkFreeWheel();
@@ -594,7 +596,7 @@ protected:
     virtual void motorMowControl();
     
     // date & time
-    virtual void setDefaultTime();
+    //virtual void setDefaultTime();
     
     // set reverse
     //virtual void reverseOrBidir(byte aRollDir);    
@@ -603,7 +605,7 @@ protected:
     // other		
 	  virtual void setSensorTriggered(char type);
     virtual void printRemote();
-    virtual void printOdometry();
+    //virtual void printOdometry();
     virtual void printMenu();    
     virtual void printErrors();
     virtual void delayInfo(int ms);    

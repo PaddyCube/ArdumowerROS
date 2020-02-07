@@ -55,12 +55,11 @@ const char *consoleModeNames[] = {"sen_counters", "sen_values", "perimeter", "of
 #include "battery.h"
 #include "consoleui.h"
 #include "ros.h"
-#include "rmcs.h" // Use Robot Mower Communication Standard
 #include "motor.h"
 #include "buzzer.h"
 #include "modelrc.h"
 #include "settings.h"
-#include "timer.h"
+
 // -----------------------------
 
 // Spannungsteiler Gesamtspannung ermitteln (Reihenschaltung R1-R2, U2 bekannt, U_GES zu ermitteln)
@@ -90,7 +89,7 @@ Robot::Robot()
 
   odometryLeft = odometryRight = 0;
   odometryLeftLastState = odometryLeftLastState2 = odometryRightLastState = odometryRightLastState2 = LOW;
-  odometryTheta = odometryX = odometryY = 0;
+  //odometryTheta = odometryX = odometryY = 0;
 
   motorRightRpmCurr = motorLeftRpmCurr = 0;
   lastMotorRpmTime = 0;
@@ -278,7 +277,7 @@ void Robot::setUserSwitches()
 
 void Robot::setup()
 {
-  setDefaultTime();
+  //setDefaultTime();
   setMotorPWM(0, 0, false);
   loadSaveErrorCounters(true);
   loadUserSettings();
@@ -357,10 +356,10 @@ void Robot::checkButton()
       beep(1);
       buttonCounter++;
       setSensorTriggered(SEN_BUTTON);
-     // if (!rmcsUse)
+      // if (!rmcsUse)
       //{
-        resetIdleTime();
-     // }
+      resetIdleTime();
+      // }
     }
     else
     {
@@ -871,7 +870,7 @@ void Robot::checkCurrent()
       // Raise event to ROS
       //reverseOrBidir(RIGHT);
     }
-    else if ((stateCurr == STATE_REVERSE) && (millis() > stateStartTime + motorPowerIgnoreTime))
+    /*     else if ((stateCurr == STATE_REVERSE) && (millis() > stateStartTime + motorPowerIgnoreTime))
     {
       motorLeftSenseCounter++;
       setSensorTriggered(SEN_MOTOR_LEFT);
@@ -887,7 +886,7 @@ void Robot::checkCurrent()
       setMotorPWM(0, 0, false);
       // ROS raise event
       //setNextState(STATE_FORWARD, 0);
-    }
+    } */
   }
   else if (motorRightSense >= motorPowerMax)
   {
@@ -901,7 +900,7 @@ void Robot::checkCurrent()
       setMotorPWM(0, 0, false);
       // ROS raise event
       //  reverseOrBidir(RIGHT);
-    }
+    } /* 
     else if ((stateCurr == STATE_REVERSE) && (millis() > stateStartTime + motorPowerIgnoreTime))
     {
       motorRightSenseCounter++;
@@ -917,7 +916,7 @@ void Robot::checkCurrent()
       setMotorPWM(0, 0, false);
       // ROS raise event
       // setNextState(STATE_FORWARD, 0);
-    }
+    } */
   }
 }
 
@@ -927,7 +926,8 @@ void Robot::checkBumpers()
   if (!bumperUse)
     return;
   //if ((mowPatternCurr == MOW_BIDIR) && (millis() < stateStartTime + 4000)) return;
-  if (millis() < stateStartTime + 4000) return;
+  if (millis() < stateStartTime + 4000)
+    return;
 
   if ((bumperLeft || bumperRight))
   {
@@ -986,11 +986,14 @@ void Robot::checkBumpersPerimeter()
     return;
   if ((bumperLeft || bumperRight))
   {
-    /*     if ((bumperLeft) || (stateCurr == STATE_PERI_TRACK)) {
-      setNextState(STATE_PERI_REV, RIGHT);          
-    } else {
+    if ((bumperLeft) || (stateCurr == STATE_PERI_TRACK))
+    {
+      setNextState(STATE_PERI_REV, RIGHT);
+    }
+    else
+    {
       setNextState(STATE_PERI_REV, LEFT);
-    } */
+    }
     // ROS raise event
   }
 }
@@ -1111,7 +1114,7 @@ void Robot::checkSonar()
   if (millis() < nextTimeCheckSonar)
     return;
   nextTimeCheckSonar = millis() + 500;
-  if ( (millis() < stateStartTime + 4000)
+  if (millis() < stateStartTime + 4000)
     return;
   if (sonarDistCenter < 11 || sonarDistCenter > 100)
     sonarDistCenter = NO_ECHO; // Objekt ist zu nah am Sensor Wert ist unbrauchbar
@@ -1120,7 +1123,7 @@ void Robot::checkSonar()
   if (sonarDistLeft < 11 || sonarDistLeft > 100)
     sonarDistLeft = NO_ECHO; // Filters spiks under the possible detection limit
   // slow down motor wheel speed near obstacles
-  if ((stateCurr == STATE_FORWARD) || ( ((stateCurr == STATE_FORWARD) || (stateCurr == STATE_REVERSE))))
+  if ((stateCurr == STATE_FORWARD)) //|| (((stateCurr == STATE_FORWARD) || (stateCurr == STATE_REVERSE))))
   {
     if (sonarObstacleTimeout == 0)
     {
@@ -1159,7 +1162,7 @@ void Robot::checkSonar()
         reverseOrBidir(LEFT); // toggle roll dir
       else
         reverseOrBidir(RIGHT); */
-        // ROS raise event sonar trigger
+      // ROS raise event sonar trigger
     }
     if ((sonarDistRight != NO_ECHO) && (sonarDistRight < sonarTriggerBelow))
     {
@@ -1189,7 +1192,7 @@ void Robot::checkTilt()
   {
     if ((tilt) && (stateCurr != STATE_TILT_STOP) && (stateCurr != STATE_OFF) && (stateCurr != STATE_STATION_CHARGING))
     {
-     // Console.println(F("BumperDuino tilt"));
+      // Console.println(F("BumperDuino tilt"));
       setSensorTriggered(SEN_TILT);
       //setNextState(STATE_TILT_STOP, 0);
       // ROS raise event tilt
@@ -1204,7 +1207,7 @@ void Robot::checkTilt()
   {
     if ((abs(pitchAngle) > 40) || (abs(rollAngle) > 40))
     {
-    //  Console.println(F("Error: IMU tilt"));
+      //  Console.println(F("Error: IMU tilt"));
       addErrorCounter(ERR_IMU_TILT);
       setSensorTriggered(SEN_TILT);
       //setNextState(STATE_ERROR, 0);
@@ -1220,7 +1223,7 @@ void Robot::checkTilt()
 // check if mower is stuck ToDo: take HDOP into consideration if gpsSpeed is reliable
 // ROS need complete rework because mower will not unstuck itself
 void Robot::checkIfStuck()
-{
+{ /*
   if (millis() < nextTimeCheckIfStuck)
     return;
   nextTimeCheckIfStuck = millis() + 300;
@@ -1258,13 +1261,13 @@ void Robot::checkIfStuck()
       motorMowEnable = false;
       if (errorCounterMax[ERR_STUCK] >= 3)
       { // robot is definately stuck and unable to move
-      //  Console.println(F("Error: Mower is stuck"));
+        //  Console.println(F("Error: Mower is stuck"));
         addErrorCounter(ERR_STUCK);
         setNextState(STATE_ERROR, 0); //mower is switched into ERROR
         // ROS raise event stuck
         //robotIsStuckCounter = 0;
       }
-     /*  else if (errorCounter[ERR_STUCK] < 3)
+      /*  else if (errorCounter[ERR_STUCK] < 3)
       { // mower tries 3 times to get unstuck
         if (stateCurr == STATE_FORWARD)
         {
@@ -1280,9 +1283,9 @@ void Robot::checkIfStuck()
           setMotorPWM(0, 0, false);
           setNextState(STATE_FORWARD, 0);
         }
-      } */
+      } 
     }
-  }
+  } */
 }
 
 void Robot::processGPSData()
@@ -1311,11 +1314,11 @@ void Robot::checkTimeout()
   {
     // timeout
     motorMowSenseErrorCounter = 0;
-  /*   if (rollDir == RIGHT)
+    /*   if (rollDir == RIGHT)
       setNextState(STATE_REVERSE, LEFT); // toggle roll dir
     else
       setNextState(STATE_REVERSE, RIGHT); */
-      // ROS raise event lane timeout
+    // ROS raise event lane timeout
   }
 }
 
@@ -1345,7 +1348,7 @@ void Robot::setNextState(byte stateNew, byte dir)
       stateNew = STATE_PERI_REV;
   }
   // ROS this needs to be reworked
-/*   if (stateNew == STATE_FORWARD)
+  /*   if (stateNew == STATE_FORWARD)
   {
     if ((stateCurr == STATE_STATION_REV) || (stateCurr == STATE_STATION_ROLL) || (stateCurr == STATE_STATION_CHECK))
       return;
@@ -1356,7 +1359,7 @@ void Robot::setNextState(byte stateNew, byte dir)
   } */
   // evaluate new state
   stateNext = stateNew;
-  rollDir = dir;/* 
+  rollDir = dir; /* 
   // ROS rework behaviour during unpark from station
   if (stateNew == STATE_STATION_REV)
   {
@@ -1383,9 +1386,9 @@ void Robot::setNextState(byte stateNew, byte dir)
     setActuator(ACT_CHGRELAY, 0);
     motorMowEnable = false;
   } */
-  // ROS this should be perimeter tracking
-  //else
-   if (stateNew == STATE_PERI_ROLL)
+                 // ROS this should be perimeter tracking
+                 //else
+  /*if (stateNew == STATE_PERI_ROLL)
   {
     stateEndTime = millis() + perimeterTrackRollTime + motorZeroSettleTime;
     if (dir == RIGHT)
@@ -1403,8 +1406,9 @@ void Robot::setNextState(byte stateNew, byte dir)
   {
     motorLeftSpeedRpmSet = motorRightSpeedRpmSet = -motorSpeedMaxRpm / 2;
     stateEndTime = millis() + perimeterTrackRevTime + motorZeroSettleTime;
-  }
-  else if (stateNew == STATE_PERI_OUT_FORW)
+  } */
+  //else
+  if (stateNew == STATE_PERI_OUT_FORW)
   {
     motorLeftSpeedRpmSet = motorRightSpeedRpmSet = motorSpeedMaxRpm;
     stateEndTime = millis() + perimeterOutRevTime + motorZeroSettleTime + 1000;
@@ -1449,11 +1453,11 @@ void Robot::setNextState(byte stateNew, byte dir)
     statsMowTimeTotalStart = true;
     setActuator(ACT_CHGRELAY, 0);
   }
-  else if (stateNew == STATE_REVERSE)
+  /*else if (stateNew == STATE_REVERSE)
   {
     motorLeftSpeedRpmSet = motorRightSpeedRpmSet = -motorSpeedMaxRpm / 1.25;
     stateEndTime = millis() + motorReverseTime + motorZeroSettleTime;
-  }
+  } */
   /* else if (stateNew == STATE_BUMPER_REVERSE)
   {
     motorLeftSpeedRpmSet = motorRightSpeedRpmSet = -motorSpeedMaxRpm / 1.25;
@@ -1487,8 +1491,8 @@ void Robot::setNextState(byte stateNew, byte dir)
     {
       motorRightSpeedRpmSet = motorSpeedMaxRpm / 1.25;
       motorLeftSpeedRpmSet = -motorRightSpeedRpmSet;
-    }*/
-  } 
+    }
+  } */
   if (stateCurr == STATE_STATION_CHARGING)
   {
     // always switch off charging relay if leaving state STATE_STATION_CHARGING
@@ -1576,7 +1580,7 @@ void Robot::loop()
   ADCMan.run();
 
   // ROS no read of serial console in loop, only setup
-/*   if (stateCurr != STATE_ROS)
+  /*   if (stateCurr != STATE_ROS)
     readSerial();
   if (!rmcsUse)
   {
@@ -1613,9 +1617,9 @@ void Robot::loop()
   }
 
   if (millis() >= nextTimeInfo)
-  /* {
+  {
     nextTimeInfo = millis() + 1000;
-    if (rmcsUse == false)
+    /* if (rmcsUse == false)
     {
       printInfo(Console);
       printErrors();
@@ -1632,8 +1636,8 @@ void Robot::loop()
       else setActuator(ACT_LED, LOW);        */
     //checkErrorCounter();
     if (stateCurr == STATE_REMOTE)
-     // printRemote();
-    loopsPerSec = loopsPerSecCounter;
+      // printRemote();
+      loopsPerSec = loopsPerSecCounter;
     if (stateCurr != STATE_ERROR)
     {
       if (loopsPerSec < 10)
@@ -1645,8 +1649,8 @@ void Robot::loop()
         loopsPerSecLowCounter--; // loopsPerSec OK
       if (loopsPerSecLowCounter > 10)
       { // too long I2C cables can be a reason for this
-       // Console.println(F("Error: loopsPerSec too low (check I2C cables)"));
-       // ROS raise event Arduino too slow
+        // Console.println(F("Error: loopsPerSec too low (check I2C cables)"));
+        // ROS raise event Arduino too slow
         addErrorCounter(ERR_CPU_SPEED);
         setNextState(STATE_ERROR, 0); //mower is switched into ERROR
       }
@@ -1722,7 +1726,7 @@ void Robot::loop()
     // ROS need rework here
   case STATE_FORWARD:
     // driving forward
-   /*  if (mowPatternCurr == MOW_BIDIR)
+    /*  if (mowPatternCurr == MOW_BIDIR)
     {
       double ratio = motorBiDirSpeedRatio1;
       if (stateTime > 4000)
@@ -1733,7 +1737,7 @@ void Robot::loop()
         motorLeftSpeedRpmSet = ((double)motorRightSpeedRpmSet) * ratio;
     } */
     checkErrorCounter();
-    checkTimer();
+    //checkTimer();
     checkRain();
     checkCurrent();
     checkFreeWheel();
@@ -1924,14 +1928,14 @@ void Robot::loop()
         {
           setNextState(STATE_STATION_CHARGING, 0);
         }
-        else
-          checkTimer();
+        //else
+          //checkTimer();
       }
       else
         setNextState(STATE_OFF, 0);
     }
-    else
-      checkTimer();
+    //else
+     // checkTimer();
     break;
   case STATE_STATION_CHARGING:
     // waiting until charging completed
@@ -1941,8 +1945,8 @@ void Robot::loop()
         setNextState(STATE_STATION, 0);
       else if (millis() - stateStartTime > chargingTimeout)
       {
-      //  Console.println(F("Battery chargingTimeout"));
-      // ROS raise charing error
+        //  Console.println(F("Battery chargingTimeout"));
+        // ROS raise charing error
         addErrorCounter(ERR_BATTERY);
         setNextState(STATE_ERROR, 0);
       }
@@ -1983,7 +1987,7 @@ void Robot::loop()
     }
     break;
     // ROS define unparking from station
- /*  case STATE_STATION_REV:
+    /*  case STATE_STATION_REV:
     // charging: drive reverse
     if (millis() >= stateEndTime)
       setNextState(STATE_STATION_ROLL, 0);

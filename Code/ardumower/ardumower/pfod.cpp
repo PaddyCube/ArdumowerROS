@@ -301,12 +301,12 @@ void RemoteControl::sendMotorMenu(boolean update){
   sendSlider("a15", F("Speed max in pwm"), robot->motorSpeedMaxPwm, "", 1, 255);      
   sendSlider("a11", F("Accel"), robot->motorAccel, "", 1, 2000, 500);  
   sendSlider("a18", F("Power ignore time"), robot->motorPowerIgnoreTime, "", 1, 8000);     
-  sendSlider("a07", F("Roll time max"), robot->motorRollTimeMax, "", 1, 8000); 
-  sendSlider("a19", F("Roll time min"), robot->motorRollTimeMin, "", 1, (robot->motorRollTimeMax - 500)); 
-  sendSlider("a08", F("Reverse time"), robot->motorReverseTime, "", 1, 8000);     
+  //sendSlider("a07", F("Roll time max"), robot->motorRollTimeMax, "", 1, 8000); 
+  //sendSlider("a19", F("Roll time min"), robot->motorRollTimeMin, "", 1, (robot->motorRollTimeMax - 500)); 
+  //sendSlider("a08", F("Reverse time"), robot->motorReverseTime, "", 1, 8000);     
   sendSlider("a09", F("Forw time max"), robot->motorForwTimeMax, "", 10, 80000);       
-  sendSlider("a12", F("Bidir speed ratio 1"), robot->motorBiDirSpeedRatio1, "", 0.01, 1.0);       
-  sendSlider("a13", F("Bidir speed ratio 2"), robot->motorBiDirSpeedRatio2, "", 0.01, 1.0);       
+  //sendSlider("a12", F("Bidir speed ratio 1"), robot->motorBiDirSpeedRatio1, "", 0.01, 1.0);       
+  //sendSlider("a13", F("Bidir speed ratio 2"), robot->motorBiDirSpeedRatio2, "", 0.01, 1.0);       
   serialPort->println(F("|a10~Testing is"));
   switch (testmode){
     case 0: serialPort->print(F("OFF")); break;
@@ -367,13 +367,13 @@ void RemoteControl::processMotorMenu(String pfodCmd){
   
   }      
     else if (pfodCmd.startsWith("a15")) processSlider(pfodCmd, robot->motorSpeedMaxPwm, 1);
-    else if (pfodCmd.startsWith("a07")) processSlider(pfodCmd, robot->motorRollTimeMax, 1); 
-    else if (pfodCmd.startsWith("a19")) processSlider(pfodCmd, robot->motorRollTimeMin, 1); 
-    else if (pfodCmd.startsWith("a08")) processSlider(pfodCmd, robot->motorReverseTime, 1);
+    //else if (pfodCmd.startsWith("a07")) processSlider(pfodCmd, robot->motorRollTimeMax, 1); 
+    //else if (pfodCmd.startsWith("a19")) processSlider(pfodCmd, robot->motorRollTimeMin, 1); 
+    //else if (pfodCmd.startsWith("a08")) processSlider(pfodCmd, robot->motorReverseTime, 1);
     else if (pfodCmd.startsWith("a09")) processSlider(pfodCmd, robot->motorForwTimeMax, 10);
     else if (pfodCmd.startsWith("a11")) processSlider(pfodCmd, robot->motorAccel, 1);    
-    else if (pfodCmd.startsWith("a12")) processSlider(pfodCmd, robot->motorBiDirSpeedRatio1, 0.01);    
-    else if (pfodCmd.startsWith("a13")) processSlider(pfodCmd, robot->motorBiDirSpeedRatio2, 0.01);    
+   // else if (pfodCmd.startsWith("a12")) processSlider(pfodCmd, robot->motorBiDirSpeedRatio1, 0.01);    
+   // else if (pfodCmd.startsWith("a13")) processSlider(pfodCmd, robot->motorBiDirSpeedRatio2, 0.01);    
     else if (pfodCmd.startsWith("a16")) robot->motorLeftSwapDir = !robot->motorLeftSwapDir;
     else if (pfodCmd.startsWith("a17")) robot->motorRightSwapDir = !robot->motorRightSwapDir;  
     else if (pfodCmd.startsWith("a18")) processSlider(pfodCmd, robot->motorPowerIgnoreTime, 1);        
@@ -634,7 +634,8 @@ void RemoteControl::sendGPSMenu(boolean update){
   serialPort->print(F("|q00~Use "));
   sendYesNo(robot->gpsUse);
   sendSlider("q01", F("Stuck if GPS speed is below"), robot->stuckIfGpsSpeedBelow, "", 0.1, 3); 
-  sendSlider("q02", F("GPS speed ignore time"), robot->gpsSpeedIgnoreTime, "", 1, 10000, robot->motorReverseTime);       
+  // ROS?
+  //sendSlider("q02", F("GPS speed ignore time"), robot->gpsSpeedIgnoreTime, "", 1, 10000, robot->motorReverseTime);       
   serialPort->println("}");
 }
 
@@ -788,8 +789,8 @@ void RemoteControl::sendOdometryMenu(boolean update){
   sendSlider("l06", F("Speed max in rpm"), robot->motorSpeedMaxRpm, "", 1, 100);    
   sendPIDSlider("l07", "RPM", robot->motorLeftPID, 0.01, 3.0);        
   sendSlider("l04", F("Ticks per one full revolution"), robot->odometryTicksPerRevolution, "", 1, 2120);       
-  sendSlider("l01", F("Ticks per cm"), robot->odometryTicksPerCm, "", 0.1, 35);       
-  sendSlider("l02", F("Wheel base cm"), robot->odometryWheelBaseCm, "", 0.1, 50);    
+  //sendSlider("l01", F("Ticks per cm"), robot->odometryTicksPerCm, "", 0.1, 35);       
+  //sendSlider("l02", F("Wheel base cm"), robot->odometryWheelBaseCm, "", 0.1, 50);    
 	serialPort->println(F("|l05~Testing is"));
   switch (testmode){
     case 0: serialPort->print(F("OFF")); break;
@@ -802,8 +803,8 @@ void RemoteControl::sendOdometryMenu(boolean update){
 
 void RemoteControl::processOdometryMenu(String pfodCmd){      
   if (pfodCmd == "l00") robot->odometryUse = !robot->odometryUse;
-    else if (pfodCmd.startsWith("l01")) processSlider(pfodCmd, robot->odometryTicksPerCm, 0.1);
-    else if (pfodCmd.startsWith("l02")) processSlider(pfodCmd, robot->odometryWheelBaseCm, 0.1); 
+    //else if (pfodCmd.startsWith("l01")) processSlider(pfodCmd, robot->odometryTicksPerCm, 0.1);
+    //else if (pfodCmd.startsWith("l02")) processSlider(pfodCmd, robot->odometryWheelBaseCm, 0.1); 
     else if (pfodCmd.startsWith("l04")) processSlider(pfodCmd, robot->odometryTicksPerRevolution, 1);    
     //else if (pfodCmd.startsWith("l08")) robot->twoWayOdometrySensorUse = !robot->twoWayOdometrySensorUse;    
     else if (pfodCmd == "l05") { 
@@ -1045,7 +1046,8 @@ void RemoteControl::processCommandMenu(String pfodCmd){
   } else if (pfodCmd == "ra"){
     // cmd: start auto mowing      
     robot->motorMowEnable = true;      
-    robot->setNextState(STATE_FORWARD, 0);                
+    // ROS raise Event Button start
+   // robot->setNextState(STATE_FORWARD, 0);                
     sendCommandMenu(true);
   } else if (pfodCmd == "rc"){      
     // cmd: start remote control (RC)      
@@ -1270,14 +1272,15 @@ void RemoteControl::run(){
       serialPort->print(",");
       serialPort->println(robot->batCapacity);
     }
-  } else if (pfodState == PFOD_PLOT_ODO2D){
+  } /*else if (pfodState == PFOD_PLOT_ODO2D){
     if (millis() >= nextPlotTime){
       nextPlotTime = millis() + 500;
       serialPort->print(robot->odometryX);
       serialPort->print(",");
       serialPort->println(robot->odometryY);
-    }
-  } else if (pfodState == PFOD_PLOT_IMU){
+    } 
+  } */
+  else if (pfodState == PFOD_PLOT_IMU){
     if (millis() >= nextPlotTime){
       nextPlotTime = millis() + 200;
       serialPort->print((float(millis())/1000.0f));

@@ -24,11 +24,11 @@ void Robot::calcOdometry(){
   int ticksRight = odoRight - lastOdoRight;
   lastOdoLeft = odoLeft;
   lastOdoRight = odoRight;    
-  double left_cm = ((double)ticksLeft) / ((double)odometryTicksPerCm);
-  double right_cm = ((double)ticksRight) / ((double)odometryTicksPerCm);  
-  double avg_cm  = (left_cm + right_cm) / 2.0;
-  double wheel_theta = (left_cm - right_cm) / ((double)odometryWheelBaseCm);    
-  odometryTheta = scalePI(odometryTheta - wheel_theta); 
+  //double left_cm = ((double)ticksLeft) / ((double)odometryTicksPerCm);
+  //double right_cm = ((double)ticksRight) / ((double)odometryTicksPerCm);  
+  //double avg_cm  = (left_cm + right_cm) / 2.0;
+  //double wheel_theta = (left_cm - right_cm) / ((double)odometryWheelBaseCm);    
+  //odometryTheta = scalePI(odometryTheta - wheel_theta); 
   
 	// calculate RPM 
   motorLeftRpmCurr  = double ((( ((double)ticksLeft) / ((double)odometryTicksPerRevolution)) / ((double)(millis() - lastMotorRpmTime))) * 60000.0); 
@@ -37,9 +37,9 @@ void Robot::calcOdometry(){
   
   // ROS coordinate system (X+ forward, Y+ left, Z+ up)  
   // FIXME: theta should be old theta, not new theta?
-  odometryY += avg_cm * sin(odometryTheta); 
-  odometryX += avg_cm * cos(odometryTheta); 
-}
+  //odometryY += avg_cm * sin(odometryTheta); 
+  //odometryX += avg_cm * cos(odometryTheta); 
+} 
 
 
 // sets wheel motor actuators
@@ -292,6 +292,8 @@ void Robot::checkOdometryFaults(){
   if (!odometryUse)  return;
   bool leftErr = false;
   bool rightErr = false;
+  // ROS need rework detect fault odometry
+  /*
   if ((stateCurr == STATE_FORWARD) &&  (millis()-stateStartTime>8000) ) {
     // just check if odometry sensors may not be working at all
     if ( (motorLeftPWMCurr > 100) && (abs(motorLeftRpmCurr) < 1)  )  leftErr = true;
@@ -301,7 +303,8 @@ void Robot::checkOdometryFaults(){
     // just check if odometry sensors may be turning in the wrong direction
     if ( ((motorLeftPWMCurr > 100) && (motorLeftRpmCurr < -3)) || ((motorLeftPWMCurr < -100) && (motorLeftRpmCurr > 3)) ) leftErr = true;
     if ( ((motorRightPWMCurr > 100) && (motorRightRpmCurr < -3)) || ((motorRightPWMCurr < -100) && (motorRightRpmCurr > 3)) ) rightErr = true;
-  }  
+  } 
+  */ 
   if (leftErr){
     Console.print("Left odometry error: PWM=");
     Console.print(motorLeftPWMCurr);
@@ -442,7 +445,7 @@ void Robot::motorMowControl(){
 }
 
 
-
+/*
 void Robot::printOdometry(){
   Console.print(F("ODO,"));
   Console.print(odometryX);
@@ -453,5 +456,5 @@ void Robot::printOdometry(){
   Console.print(",");
   Console.println(odometryY);  
 }
-
+*/
 

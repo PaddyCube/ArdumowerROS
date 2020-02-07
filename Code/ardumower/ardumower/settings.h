@@ -57,9 +57,9 @@ void Robot::loadSaveUserSettings(boolean readflag){
   eereadwrite(readflag, addr, motorPowerMax);
   eereadwrite(readflag, addr, motorSenseRightScale);
   eereadwrite(readflag, addr, motorSenseLeftScale);
-  eereadwrite(readflag, addr, motorRollTimeMax);
-  eereadwrite(readflag, addr, motorRollTimeMin);
-  eereadwrite(readflag, addr, motorReverseTime);
+  //eereadwrite(readflag, addr, motorRollTimeMax);
+  //eereadwrite(readflag, addr, motorRollTimeMin);
+  //eereadwrite(readflag, addr, motorReverseTime);
   eereadwrite(readflag, addr, motorPowerIgnoreTime);
   eereadwrite(readflag, addr, motorForwTimeMax);
   eereadwrite(readflag, addr, motorMowSpeedMaxPwm);
@@ -72,8 +72,8 @@ void Robot::loadSaveUserSettings(boolean readflag){
   eereadwrite(readflag, addr, motorMowPID.Kp);
   eereadwrite(readflag, addr, motorMowPID.Ki);
   eereadwrite(readflag, addr, motorMowPID.Kd);
-  eereadwrite(readflag, addr, motorBiDirSpeedRatio1);
-  eereadwrite(readflag, addr, motorBiDirSpeedRatio2);  
+  //eereadwrite(readflag, addr, motorBiDirSpeedRatio1);
+  //eereadwrite(readflag, addr, motorBiDirSpeedRatio2);  
   eereadwrite(readflag, addr, motorLeftSwapDir);
   eereadwrite(readflag, addr, motorRightSwapDir);  
   eereadwrite(readflag, addr, bumperUse);
@@ -123,8 +123,8 @@ void Robot::loadSaveUserSettings(boolean readflag){
   eereadwrite(readflag, addr, stationCheckTime);
   eereadwrite(readflag, addr, odometryUse);
   eereadwrite(readflag, addr, odometryTicksPerRevolution);
-  eereadwrite(readflag, addr, odometryTicksPerCm);
-  eereadwrite(readflag, addr, odometryWheelBaseCm);
+  //eereadwrite(readflag, addr, odometryTicksPerCm);
+  //eereadwrite(readflag, addr, odometryWheelBaseCm);
   eereadwrite(readflag, addr, odometryLeftSwapDir);
   eereadwrite(readflag, addr, odometryRightSwapDir);
   eereadwrite(readflag, addr, twoWayOdometrySensorUse);
@@ -199,21 +199,21 @@ void Robot::printSettingSerial(){
   Console.println(motorPowerIgnoreTime);
   Console.print  (F("motorZeroSettleTime                        : "));
   Console.println(motorZeroSettleTime);
-  Console.print  (F("motorRollTimeMax                           : "));
-  Console.println(motorRollTimeMax);
-  Console.print  (F("motorRollTimeMin                           : "));
-  Console.println(motorRollTimeMin);
-  Console.print  (F("motorReverseTime                           : "));
-  Console.println(motorReverseTime);
+ // Console.print  (F("motorRollTimeMax                           : "));
+ // Console.println(motorRollTimeMax);
+ // Console.print  (F("motorRollTimeMin                           : "));
+ // Console.println(motorRollTimeMin);
+ // Console.print  (F("motorReverseTime                           : "));
+ // Console.println(motorReverseTime);
   
   Console.print  (F("motorForwTimeMax                           : "));
   Console.println(motorForwTimeMax);
   
-  Console.print  (F("motorBiDirSpeedRatio1                      : "));
-  Console.println(motorBiDirSpeedRatio1);
+ // Console.print  (F("motorBiDirSpeedRatio1                      : "));
+ // Console.println(motorBiDirSpeedRatio1);
   
-  Console.print  (F("motorBiDirSpeedRatio2                      : "));
-  Console.println(motorBiDirSpeedRatio2);
+ // Console.print  (F("motorBiDirSpeedRatio2                      : "));
+ // Console.println(motorBiDirSpeedRatio2);
 
   Console.print  (F("motorLeftPID.Kp                            : "));
   Console.println(motorLeftPID.Kp);
@@ -418,10 +418,10 @@ void Robot::printSettingSerial(){
   Console.println( twoWayOdometrySensorUse,1);
   Console.print  (F("odometryTicksPerRevolution                 : "));
   Console.println( odometryTicksPerRevolution);
-  Console.print  (F("odometryTicksPerCm                         : "));
-  Console.println( odometryTicksPerCm);
-  Console.print  (F("odometryWheelBaseCm                        : "));
-  Console.println( odometryWheelBaseCm);  
+  //Console.print  (F("odometryTicksPerCm                         : "));
+  //Console.println( odometryTicksPerCm);
+  //Console.print  (F("odometryWheelBaseCm                        : "));
+  //Console.println( odometryWheelBaseCm);  
 
 
 // ------ odometry Interrupt-------------------------------------------------------
