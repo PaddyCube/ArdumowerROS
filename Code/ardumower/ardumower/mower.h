@@ -22,8 +22,8 @@ choose your robot type, PCB version, baud rates, pin definitions etc.
    
 
 // ------- Choose one Ardumower PCB revision (1.2, 1.3 etc.) ------------------
-//#define PCB_1_2    
-#define PCB_1_3    
+#define PCB_1_2    
+//#define PCB_1_3    
 
 // ------- Choose robot model (Ardumower or Ardumower Mini) -------------------
 #define ROBOT_ARDUMOWER
@@ -117,8 +117,7 @@ choose your robot type, PCB version, baud rates, pin definitions etc.
 // GPS: Serial3 (TX3, RX3) 
 
 // ------- baudrates---------------------------------
-#define CONSOLE_BAUDRATE    19200       // baudrate used for console
-//#define CONSOLE_BAUDRATE    115200      // baudrate if using Ardumower Control Center and DUE 
+#define CONSOLE_BAUDRATE    115200      // baudrate if using Ardumower Control Center and DUE 
 #define BLUETOOTH_BAUDRATE  19200       // baudrate used for communication with Bluetooth module (Ardumower default: 19200)
 #define ESP8266_BAUDRATE    115200      // baudrate used for communication with esp8266 Wifi module
 #define BLUETOOTH_PIN       1234

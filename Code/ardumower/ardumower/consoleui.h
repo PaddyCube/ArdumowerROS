@@ -25,18 +25,8 @@ String Robot::waitStringConsole() {
 
 
 // ROS need to be replaced with ROS debug info?
-/* void Robot::printInfo(Stream &s){
+ void Robot::printInfo(Stream &s){
   
-  /*Console.print(millis()/1000);
-  Console.print(",");
-  Console.print(motorMowRPMSet);
-  Console.print(",");
-  Console.print(motorMowRpmCurr);
-  Console.print(",");
-  Console.println(motorMowPWMCurr);
-  return;
-  //Console.println(time2str(datetime.time));
-
   if (consoleMode == CONSOLE_OFF) {
   } else {
   Streamprint(s, "t%6u ", (millis()-stateStartTime)/1000);  
@@ -47,9 +37,9 @@ String Robot::waitStringConsole() {
   if (consoleMode == CONSOLE_PERIMETER){
     Streamprint(s, "sig min %4d max %4d avg %4d mag %5d qty %3d",
       (int)perimeter.getSignalMin(0), (int)perimeter.getSignalMax(0), (int)perimeter.getSignalAvg(0),
-      perimeterMag, (int)(perimeter.getFilterQuality(0)*100.0));
+      perimeterLeftMag, (int)(perimeter.getFilterQuality(0)*100.0));
     Streamprint(s, "  in %2d  cnt %4d  on %1d\r\n",  
-      (int)perimeterInside, perimeterCounter, (int)(!perimeter.signalTimedOut(0)) );      
+      (int)perimeterLeftInside, perimeterLeftCounter, (int)(!perimeter.signalTimedOut(0)) );      
   } else {  
     if (odometryUse) Streamprint(s, "rpm %4d %4d ", (int)motorLeftRpmCurr, (int)motorRightRpmCurr);   
     Streamprint(s, "set %4d %4d ", (int)motorLeftSpeedRpmSet, (int)motorRightSpeedRpmSet);
@@ -62,7 +52,7 @@ String Robot::waitStringConsole() {
       Streamprint(s, "yaw %3d ", (int)(imu.ypr.yaw/PI*180.0));  
       Streamprint(s, "pit %3d ", (int)(imu.ypr.pitch/PI*180.0));
       Streamprint(s, "rol %3d ", (int)(imu.ypr.roll/PI*180.0));
-      if (perimeterUse) Streamprint(s, "per %3d ", (int)perimeterInside);              
+      if (perimeterUse) Streamprint(s, "per %3d ", (int)perimeterLeftInside);              
       if (lawnSensorUse) Streamprint(s, "lawn %3d %3d ", (int)lawnSensorFront, (int)lawnSensorBack);
     } else {
       // sensor counters
@@ -74,7 +64,7 @@ String Robot::waitStringConsole() {
       Streamprint(s, "pit %3d ", (int)(imu.ypr.pitch/PI*180.0));
       Streamprint(s, "rol %3d ", (int)(imu.ypr.roll/PI*180.0));
       //Streamprint(s, "per %3d ", perimeterLeft);          
-      if (perimeterUse) Streamprint(s, "per %3d ", perimeterCounter);                  
+      if (perimeterUse) Streamprint(s, "per %3d ", perimeterLeftCounter);                  
       if (lawnSensorUse) Streamprint(s, "lawn %3d ", lawnSensorCounter);
       if (gpsUse) Streamprint(s, "gps %2d ", (int)gps.satellites());            
     }
@@ -88,7 +78,7 @@ String Robot::waitStringConsole() {
     Streamprint(s, "%s\r\n", name.c_str());                  
   }
  }
-} */
+} 
 
 
 void Robot::printMenu(){  
@@ -267,9 +257,9 @@ void Robot::menu(){
   while(true){
     // ROS?
 /*     if (!rmcsUse){    
-   
+   */
        resetIdleTime();
-    } */
+    
     imu.update();
     if (Console.available() > 0) {
       ch = (char)Console.read();            

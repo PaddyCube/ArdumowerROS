@@ -34,7 +34,7 @@ Mower robot;
 
 Mower::Mower(){
   #if defined (ROBOT_ARDUMOWER)
-    name = "Ardumower"; //Set the Name of BT
+    name = "ArdumowerTurlebot"; //Set the Name of BT
   #else
     name = "Mini";
   #endif
@@ -442,8 +442,8 @@ void Mower::setup(){
   ADCMan.setCapture(pinBatteryVoltage, 1, false);
   ADCMan.setCapture(pinChargeVoltage, 1, false);  
   ADCMan.setCapture(pinVoltageMeasurement, 1, false);    
-  perimeter.setPins(pinPerimeterLeft, pinPerimeterRight);      
-    
+  perimeter.setPins(pinPerimeterLeft, pinPerimeterRight);    
+
   imu.init();
 	  
   gps.init();
@@ -578,9 +578,11 @@ int Mower::readSensor(char type){
   switch (type) {
 // motors------------------------------------------------------------------------------------------------
 #if defined (DRIVER_MC33926)
-    case SEN_MOTOR_MOW: return ADCMan.read(pinMotorMowSense); break;
-    case SEN_MOTOR_RIGHT: checkMotorFault(); return ADCMan.read(pinMotorRightSense); break;
-    case SEN_MOTOR_LEFT:  checkMotorFault(); return ADCMan.read(pinMotorLeftSense); break;
+   // case SEN_MOTOR_MOW: return ADCMan.read(pinMotorMowSense); break;
+    case SEN_MOTOR_RIGHT:// checkMotorFault(); 
+    return ADCMan.read(pinMotorRightSense); break;
+    case SEN_MOTOR_LEFT:  //checkMotorFault();
+     return ADCMan.read(pinMotorLeftSense); break;
     //case SEN_MOTOR_MOW_RPM: break; // not used - rpm is upated via interrupt
 #endif
 // perimeter----------------------------------------------------------------------------------------------

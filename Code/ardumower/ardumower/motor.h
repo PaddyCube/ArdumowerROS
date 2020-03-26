@@ -149,9 +149,9 @@ void Robot::motorControlPerimeter() {
   nextTimeMotorPerimeterControl = millis() + 30; //possible 15ms with the DUE
   //PerimeterMagMaxValue=2000;  //need to change in the future 	
   //tell to the pid where is the mower   (Pid.x)
-  perimeterPID.x = 5 * (double(perimeterMag) / perimeterMagMaxValue);
+  perimeterPID.x = 5 * (double(perimeterLeftMag) / perimeterLeftMagMaxValue);
   //tell to the Pid where to go (Pid.w)
-  if (perimeterInside) {
+  if (perimeterLeftInside) {
     perimeterPID.w = -0.5;
   }
   else {
@@ -173,7 +173,7 @@ void Robot::motorControlPerimeter() {
      
   	//If this condition is true one of the 2 wheels makes backward the other continues with the result of the PID (not advised)
 	  if (trackingBlockInnerWheelWhilePerimeterStruggling == 0) { //
-      if (perimeterInside) {
+      if (perimeterLeftInside) {
         rightSpeedperi = max(-MaxSpeedperiPwm, min(MaxSpeedperiPwm, MaxSpeedperiPwm / 2  + perimeterPID.y));
         leftSpeedperi = -MaxSpeedperiPwm / 2;
       }
@@ -184,7 +184,7 @@ void Robot::motorControlPerimeter() {
     }
 	  //If this condition is true one of the 2 wheels stop rotate the other continues with the result of the PID (advised)
     if (trackingBlockInnerWheelWhilePerimeterStruggling == 1) {
-      if (perimeterInside) {
+      if (perimeterLeftInside) {
         rightSpeedperi = max(-MaxSpeedperiPwm, min(MaxSpeedperiPwm, MaxSpeedperiPwm / 2  + perimeterPID.y));
         leftSpeedperi = 0;
       }
@@ -212,10 +212,10 @@ void Robot::motorControlPerimeter() {
 		// here we have just found again the wire we need a slow return to let the pid temp react by decreasing its action (perimeterPID.y / PeriCoeffAccel)
 		if ((millis() - lastTimeForgetWire ) < trackingPerimeterTransitionTimeOut) {
 			//PeriCoeffAccel move gently from 3 to 1 and so perimeterPID.y/PeriCoeffAccel increase during 3 secondes
-			PeriCoeffAccel = (3000.00 - (millis() - lastTimeForgetWire))/1000.00 ;
-			if (PeriCoeffAccel < 1.00) PeriCoeffAccel = 1.00;
-			rightSpeedperi = max(0, min(MaxSpeedperiPwm, MaxSpeedperiPwm / 1.5 +  perimeterPID.y / PeriCoeffAccel));
-			leftSpeedperi = max(0, min(MaxSpeedperiPwm, MaxSpeedperiPwm / 1.5 -  perimeterPID.y / PeriCoeffAccel));
+			PeriLeftCoeffAccel = (3000.00 - (millis() - lastTimeForgetWire))/1000.00 ;
+			if (PeriLeftCoeffAccel < 1.00) PeriLeftCoeffAccel = 1.00;
+			rightSpeedperi = max(0, min(MaxSpeedperiPwm, MaxSpeedperiPwm / 1.5 +  perimeterPID.y / PeriLeftCoeffAccel));
+			leftSpeedperi = max(0, min(MaxSpeedperiPwm, MaxSpeedperiPwm / 1.5 -  perimeterPID.y / PeriLeftCoeffAccel));
 		}
 		else
 		//we are in straight line the pid is total and not/2
@@ -228,7 +228,7 @@ void Robot::motorControlPerimeter() {
 
 		//if the mower move in perfect straight line the transition between in and out is longuer so you need to reset the perimeterLastTransitionTime
     
-		if (abs(perimeterMag ) < perimeterMagMaxValue/4) { 
+		if (abs(perimeterLeftMag ) < perimeterLeftMagMaxValue/4) { 
 			perimeterLastTransitionTime = millis(); //initialise perimeterLastTransitionTime in perfect sthraith line
 		}  
 }

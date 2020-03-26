@@ -63,7 +63,7 @@ class Perimeter
     int16_t timedOutIfBelowSmag;
     int16_t timeOutSecIfNotInside;    
     // swap coil polarity?
-    bool swapCoilPolarity;  
+    bool swapCoilPolarity; 
     char subSample;
   private:
     unsigned long lastInsideTime[2];

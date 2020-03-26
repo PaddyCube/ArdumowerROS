@@ -139,10 +139,14 @@ Robot::Robot()
   imuRollHeading = 0;
   imuRollDir = LEFT;
 
-  perimeterMag = 1;
-  perimeterMagMedian.add(perimeterMag);
-  perimeterInside = true;
-  perimeterCounter = 0;
+  perimeterLeftMag = 1;
+  perimeterRightMag = 1;
+  perimeterLeftMagMedian.add(perimeterLeftMag);
+  perimeterLeftMagMedian.add(perimeterRightMag);
+  perimeterLeftInside = true;
+  perimeterRightInside = true;
+  perimeterLeftCounter = 0;
+  perimeterRightCounter = 0;
   perimeterLastTransitionTime = 0;
   perimeterTriggerTime = 0;
 
@@ -478,28 +482,38 @@ void Robot::readSensors()
       nextTimePerimeter = millis() + 30;
     else
       nextTimePerimeter = millis() + 50; // 50
-    perimeterMag = readSensor(SEN_PERIM_LEFT);
-    if (stateCurr == STATE_PERI_FIND)
-      perimeterMagMedian.add(abs(perimeterMag));
-    if ((perimeter.isInside(0) != perimeterInside))
+    perimeterLeftMag = readSensor(SEN_PERIM_LEFT);
+    perimeterRightMag = readSensor(SEN_PERIM_RIGHT);
+    if (stateCurr == STATE_PERI_FIND){
+      perimeterLeftMagMedian.add(abs(perimeterLeftMag));
+      perimeterLeftMagMedian.add(abs(perimeterLeftMag));
+    }
+    if ((perimeter.isInside(0) != perimeterLeftInside))
     {
-      perimeterCounter++;
+      perimeterLeftCounter++;
       setSensorTriggered(SEN_PERIM_LEFT);
       perimeterLastTransitionTime = millis();
-      perimeterInside = perimeter.isInside(0);
+      perimeterLeftInside = perimeter.isInside(0);
     }
+    if ((perimeter.isInside(1) != perimeterRightInside))
+    {
+      perimeterRightCounter++;
+      setSensorTriggered(SEN_PERIM_RIGHT);
+      perimeterLastTransitionTime = millis();
+      perimeterRightInside = perimeter.isInside(1);
+    }    
     static boolean LEDstate = false;
-    if (perimeterInside && !LEDstate)
+    if (perimeterLeftInside && perimeterRightInside && !LEDstate)
     {
       setActuator(ACT_LED, HIGH);
       LEDstate = true;
     }
-    if (!perimeterInside && LEDstate)
+    if ( (!perimeterLeftInside || !perimeterRightInside) && LEDstate)
     {
       setActuator(ACT_LED, LOW);
       LEDstate = false;
     }
-    if ((!perimeterInside) && (perimeterTriggerTime == 0))
+    if ((!perimeterLeftInside || !perimeterRightInside) && (perimeterTriggerTime == 0))
     {
       // set perimeter trigger time
       if (millis() > stateStartTime + 2000)
@@ -511,7 +525,7 @@ void Robot::readSensors()
         perimeterTriggerTime = millis();
       }
     }
-    if (perimeter.signalTimedOut(0))
+    if (perimeter.signalTimedOut(0) || perimeter.signalTimedOut(1))
     {
       if ((stateCurr != STATE_OFF) && (stateCurr != STATE_MANUAL) && (stateCurr != STATE_STATION) && (stateCurr != STATE_STATION_CHARGING) && (stateCurr != STATE_STATION_CHECK) && (stateCurr != STATE_STATION_REV) && (stateCurr != STATE_STATION_ROLL) && (stateCurr != STATE_STATION_FORW) && (stateCurr != STATE_REMOTE) && (stateCurr != STATE_PERI_OUT_FORW) && (stateCurr != STATE_PERI_OUT_REV) && (stateCurr != STATE_PERI_OUT_ROLL) && (stateCurr != STATE_PERI_TRACK))
       {
@@ -1003,16 +1017,16 @@ void Robot::checkPerimeterBoundary()
 {
   if (!perimeterUse)
     return;
-  if (millis() >= nextTimeRotationChange)
+/*   if (millis() >= nextTimeRotationChange)
   {
     nextTimeRotationChange = millis() + 60000;
     rotateLeft = !rotateLeft;
-  }
+  } */
 
   /* if (mowPatternCurr == MOW_BIDIR){
     if ((millis() < stateStartTime + 3000)) return;   
     */
-  if (!perimeterInside)
+  if (!perimeterLeftInside || !perimeterRightInside)
   {
     // ROS raise event
     /*
@@ -1061,7 +1075,7 @@ void Robot::checkPerimeterFind()
     return;
   if (stateCurr == STATE_PERI_FIND)
   {
-    if (perimeterInside)
+    if (perimeterLeftInside)
     {
       // inside
       if (motorLeftSpeedRpmSet != motorRightSpeedRpmSet)
@@ -1545,7 +1559,7 @@ void Robot::setNextState(byte stateNew, byte dir)
   if (stateNew == STATE_PERI_TRACK)
   {
     //motorMowEnable = false;     // FIXME: should be an option?
-    perimeterMagMaxValue = perimeterMagMedian.getHighest();
+    perimeterLeftMagMaxValue = perimeterLeftMagMedian.getHighest();
     setActuator(ACT_CHGRELAY, 0);
     perimeterPID.reset();
     //beep(6);
@@ -1563,14 +1577,9 @@ void Robot::setNextState(byte stateNew, byte dir)
   perimeterTriggerTime = 0;
 
   // ROS no output here possible
-  /* if (rmcsUse == false)
-  {
+
     printInfo(Console);
-  }
-  else
-  {
-    rmcsPrintInfo(Console);
-  } */
+
 } // -------------------------- ENDE void Robot::setNextState(byte stateNew, byte dir)
 
 void Robot::loop()
@@ -1580,17 +1589,10 @@ void Robot::loop()
   ADCMan.run();
 
   // ROS no read of serial console in loop, only setup
-  /*   if (stateCurr != STATE_ROS)
+  /*   if (stateCurr != STATE_ROS) */
     readSerial();
-  if (!rmcsUse)
-  {
-    if (rc.readSerial())
-      resetIdleTime();
-  }
-  else
-  {
-    rc.readSerial();
-  } */
+    rc.readSerial(); resetIdleTime();
+  
   readSensors();
   checkBattery();
   checkIfStuck();
@@ -1619,24 +1621,17 @@ void Robot::loop()
   if (millis() >= nextTimeInfo)
   {
     nextTimeInfo = millis() + 1000;
-    /* if (rmcsUse == false)
-    {
-      printInfo(Console);
-      printErrors();
-    }
 
-    if (stateCurr != STATE_ROS && rmcsUse == false)
-    {
       printInfo(Console);
       printErrors();
-    } */
+
     // ROS send info for debugging
     ledState = ~ledState;
     /*if (ledState) setActuator(ACT_LED, HIGH);
       else setActuator(ACT_LED, LOW);        */
     //checkErrorCounter();
     if (stateCurr == STATE_REMOTE)
-      // printRemote();
+       printRemote();
       loopsPerSec = loopsPerSecCounter;
     if (stateCurr != STATE_ERROR)
     {
@@ -1955,13 +1950,13 @@ void Robot::loop()
   case STATE_PERI_OUT_FORW:
     checkPerimeterBoundary();
     //if (millis() >= stateEndTime) setNextState(STATE_PERI_OUT_ROLL, rollDir);
-    if (perimeterInside || (millis() >= stateEndTime))
+    if (perimeterLeftInside || (millis() >= stateEndTime))
       setNextState(STATE_PERI_OUT_ROLL, rollDir);
     break;
   case STATE_PERI_OUT_REV:
     checkPerimeterBoundary();
     // if (millis() >= stateEndTime) setNextState(STATE_PERI_OUT_ROLL, rollDir);
-    if (perimeterInside || (millis() >= stateEndTime))
+    if (perimeterLeftInside || (millis() >= stateEndTime))
       setNextState(STATE_PERI_OUT_ROLL, rollDir);
     break;
   case STATE_PERI_OUT_ROLL:
@@ -2017,9 +2012,9 @@ void Robot::loop()
            //&&  (mowPatternCurr == MOW_RANDOM)
            && (imuUse) && (imuCorrectDir || (mowPatternCurr == MOW_LANES)))
     motorControlImuDir(); //&& (millis() > stateStartTime + 3000)
-  else
+  else */
     motorControl();
-*/
+
   if (stateCurr != STATE_REMOTE)
     motorMowSpeedPWMSet = motorMowSpeedMaxPwm;
 
