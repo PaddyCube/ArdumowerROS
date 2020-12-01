@@ -31,16 +31,7 @@ void Robot::checkBattery(){
       } */
       setActuator(ACT_BATTERY_SW, 0);  // switch off battery                     
     }
-    else if ((batVoltage < batGoHomeIfBelow) && (stateCurr == STATE_FORWARD) 
-			&& (perimeterUse)) {    //UNTESTED please verify
-    /*   Console.print(F("triggered batGoHomeIfBelow "));
-			Console.print(batVoltage);
-			Console.print(F("<"));
-			Console.println(batGoHomeIfBelow); */
-			// ROS raise event go Home
-      beep(2, true);      
-      setNextState(STATE_PERI_FIND, 0);
-    }
+
   
 	  // check if idle and robot battery can be switched off  
 		if ( (stateCurr == STATE_OFF) || (stateCurr == STATE_ERROR) ) {      
@@ -68,5 +59,3 @@ void Robot::checkBattery(){
 		}
 	}
 }
-
-

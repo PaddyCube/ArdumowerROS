@@ -110,11 +110,6 @@ Mower::Mower(){
   // ------ perimeter ---------------------------------
   perimeterUse               = 0;          // use perimeter?    
   perimeterTriggerTimeout    = 0;          // perimeter trigger timeout when escaping from inside (ms)  
-  perimeterOutRollTimeMax    = 2000;       // roll time max after perimeter out (ms)
-  perimeterOutRollTimeMin    = 750;        // roll time min after perimeter out (ms)
-  perimeterOutRevTime        = 2200;       // reverse time after perimeter out (ms)
-  perimeterTrackRollTime     = 1500;       // roll time during perimeter tracking
-  perimeterTrackRevTime      = 2200;       // reverse time during perimeter tracking
   #if defined (ROBOT_ARDUMOWER)
 	  perimeterPID.Kp            = 16;       // perimeter PID controller
     perimeterPID.Ki            = 8;
@@ -149,7 +144,6 @@ Mower::Mower(){
   #if defined (ROBOT_ARDUMOWER)
     batMonitor                 = 1;          // monitor battery and charge voltage?
 		batSwitchOffIfBelow        = 21.7;       // switch off battery if below voltage (Volt)
-		batGoHomeIfBelow           = 23.7;       // drive home voltage (Volt)  	
 		startChargingIfBelow       = 32.0;      // start charging if battery Voltage is below (99999=disabled)
 		batFull                    = 29.4;      // battery reference Voltage (fully charged) PLEASE ADJUST IF USING A DIFFERENT BATTERY VOLTAGE! FOR a 12V SYSTEM TO 14.4V		
 		batFullCurrent             = 0.1;       // current flowing when battery is fully charged	(amp), (-99999=disabled)	
@@ -178,15 +172,9 @@ Mower::Mower(){
   #endif
   
 	 batChargingCurrentMax       = 1.6;       // maximum current your charger can devliver  
-  
-  // ------  charging station ---------------------------
-  stationRevTime             = 1800;       // charge station reverse time (ms)
-  stationRollTime            = 1000;       // charge station roll time (ms)
-  stationForwTime            = 1500;       // charge station forward time (ms)
-  stationCheckTime           = 1700;       // charge station reverse check time (ms)
 
   // ------ odometry ------------------------------------
-  odometryUse                = 1;          // use odometry?    
+
   
 	#if defined (ROBOT_ARDUMOWER)
 	  odometryTicksPerRevolution = 1060;       // encoder ticks per one full resolution (without any divider)
@@ -493,12 +481,11 @@ void Mower::setup(){
 	// Wenn twoWayOdo == 1 dann:
 	// PCMSK2, PCINT21, HIGH
 	// PCMSK2, PCINT23, HIGH
-	if (odometryUse)
-	{ 
+
 	  PCICR |= (1<<PCIE2);
 	  PCMSK2 |= (1<<PCINT20);
 	  PCMSK2 |= (1<<PCINT22);	  
-	}
+	
 		
   //-------------------------------------------------------------------------	
   // mower motor speed sensor interrupt
@@ -587,12 +574,11 @@ int Mower::readSensor(char type){
 #endif
 // perimeter----------------------------------------------------------------------------------------------
     case SEN_PERIM_LEFT: return perimeter.getMagnitude(0); break;
-    //case SEN_PERIM_RIGHT: return Perimeter.getMagnitude(1); break;
+    case SEN_PERIM_RIGHT: return perimeter.getMagnitude(1); break;
     
 // battery------------------------------------------------------------------------------------------------
     case SEN_BAT_VOLTAGE: ADCMan.read(pinVoltageMeasurement);  return ADCMan.read(pinBatteryVoltage); break;
     case SEN_CHG_VOLTAGE: return ADCMan.read(pinChargeVoltage); break;
-    //case SEN_CHG_VOLTAGE: return((int)(((double)analogRead(pinChargeVoltage)) * batFactor)); break;
     case SEN_CHG_CURRENT: return ADCMan.read(pinChargeCurrent); break;
     
 // buttons------------------------------------------------------------------------------------------------
@@ -612,19 +598,11 @@ int Mower::readSensor(char type){
     case SEN_DROP_RIGHT: return(digitalRead(pinDropRight)); break;                                                                                      // Dropsensor - Absturzsensor
     case SEN_DROP_LEFT: return(digitalRead(pinDropLeft)); break;                                                                                        // Dropsensor - Absturzsensor
 
-// sonar---------------------------------------------------------------------------------------------------
-    //case SEN_SONAR_CENTER: return(readURM37(pinSonarCenterTrigger, pinSonarCenterEcho)); break;  
-    //case SEN_SONAR_CENTER: return(readHCSR04(pinSonarCenterTrigger, pinSonarCenterEcho)); break;
-    //case SEN_SONAR_LEFT: return(readHCSR04(pinSonarLeftTrigger, pinSonarLeftEcho)); break;
-    //case SEN_SONAR_RIGHT: return(readHCSR04(pinSonarRightTrigger, pinSonarRightEcho)); break;
-    
+// sonar---------------------------------------------------------------------------------------------------   
     case SEN_SONAR_CENTER: return(NewSonarCenter.ping_cm()); break;
     case SEN_SONAR_LEFT: return(NewSonarLeft.ping_cm()); break;
     case SEN_SONAR_RIGHT: return(NewSonarRight.ping_cm()); break;    
-    
-    // case SEN_LAWN_FRONT: return(measureLawnCapacity(pinLawnFrontSend, pinLawnFrontRecv)); break;    
-    //case SEN_LAWN_BACK: return(measureLawnCapacity(pinLawnBackSend, pinLawnBackRecv)); break;    
-    
+
 // imu-------------------------------------------------------------------------------------------------------
     //case SEN_IMU: imuYaw=imu.ypr.yaw; imuPitch=imu.ypr.pitch; imuRoll=imu.ypr.roll; break;    
 // rtc--------------------------------------------------------------------------------------------------------
@@ -669,5 +647,3 @@ void Mower::configureBluetooth(boolean quick){
   BluetoothConfig bt;
   bt.setParams(name, BLUETOOTH_PIN, BLUETOOTH_BAUDRATE, quick);
 }
-
-

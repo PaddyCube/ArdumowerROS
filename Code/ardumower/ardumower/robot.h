@@ -46,7 +46,7 @@
 
 //#include "QueueList.h"
 //#include <limits.h>
-
+#include <ros.h>
 // choose PCB
 
 /*
@@ -62,8 +62,6 @@ enum
 {
   SEN_PERIM_LEFT,        // 0..MAX_PERIMETER
   SEN_PERIM_RIGHT,       // 0..MAX_PERIMETER
-  SEN_PERIM_LEFT_EXTRA,  // 0..MAX_PERIMETER
-  SEN_PERIM_RIGHT_EXTRA, // 0..MAX_PERIMETER
   SEN_LAWN_FRONT,
   SEN_LAWN_BACK,
   SEN_BAT_VOLTAGE,  // Volt * 100
@@ -116,7 +114,6 @@ enum
   ERR_RTC_COMM,
   ERR_RTC_DATA,
   ERR_PERIMETER_TIMEOUT,
-  ERR_TRACKING,
   ERR_ODOMETRY_LEFT,
   ERR_ODOMETRY_RIGHT,
   ERR_BATTERY,
@@ -126,7 +123,6 @@ enum
   ERR_ADC_CALIB,
   ERR_IMU_CALIB,
   ERR_EEPROM_DATA,
-  ERR_STUCK,
   ERR_CPU_SPEED,
   // <---- add new error types here (NOTE: increase MAGIC to avoid corrupt EEPROM error data!)
   ERR_ENUM_COUNT,
@@ -138,38 +134,10 @@ enum
   STATE_OFF,     // off
   STATE_ROS,     // Linux ROS control
   STATE_REMOTE,  // model remote control (R/C)
-  STATE_FORWARD, // drive forward
-  STATE_ROLL,    // drive roll right/left
-  STATE_REVERSE, // drive reverse
-
-  //  STATE_CIRCLE,       // drive circle
   STATE_ERROR,            // error
-  STATE_PERI_FIND,        // perimeter find
-  STATE_PERI_TRACK,       // perimeter track
-  STATE_PERI_ROLL,        // perimeter roll
-  STATE_PERI_REV,         // perimeter reverse
-  STATE_STATION,          // in station
-  STATE_STATION_CHARGING, // in station charging
-  STATE_STATION_CHECK,    //checks if station is present
-  STATE_STATION_REV,      // charge reverse
-  STATE_STATION_ROLL,     // charge roll
-  STATE_STATION_FORW,     // charge forward
-  STATE_MANUAL,           // manual navigation
-  STATE_ROLL_WAIT,        // drive roll right/left
-  STATE_PERI_OUT_FORW,    // outside perimeter forward driving without checkPerimeterBoundary()
-  STATE_PERI_OUT_REV,     // outside perimeter reverse driving without checkPerimeterBoundary()
-  STATE_PERI_OUT_ROLL,    // outside perimeter rolling driving without checkPerimeterBoundary()
-  STATE_TILT_STOP,        // tilt sensor activated, stop motors, wait for un-tilt
-  //  STATE_BUMPER_REVERSE,      // drive reverse
-  //  STATE_BUMPER_FORWARD,      // drive forward
+ 
 };
 
-// roll types
-enum
-{
-  LEFT,
-  RIGHT
-};
 
 // console mode
 enum
@@ -217,17 +185,12 @@ public:
   float gpsX; // X position (m)
   float gpsY; // Y position (m)
   unsigned long nextTimeGPS;
-  unsigned long nextTimeCheckIfStuck;
   float stuckIfGpsSpeedBelow;
   int gpsSpeedIgnoreTime; // how long gpsSpeed is ignored when robot switches into a new STATE (in ms)
   int robotIsStuckCounter;
   // -------- odometry state --------------------------
-  char odometryUse; // use odometry?
-  // int wheelDiameter     ;        // wheel diameter (mm)
   char twoWayOdometrySensorUse;   // use optional two-wire odometry sensor?
   int odometryTicksPerRevolution; // encoder ticks per one full resolution
-  //float odometryTicksPerCm ;  // encoder ticks per cm
-  //float odometryWheelBaseCm ;    // wheel-to-wheel distance (cm)
   bool odometryRightSwapDir; // inverse right encoder direction?
   bool odometryLeftSwapDir;  // inverse left encoder direction?
   int odometryLeft;          // left wheel counter
@@ -236,9 +199,6 @@ public:
   boolean odometryLeftLastState2;
   boolean odometryRightLastState;
   boolean odometryRightLastState2;
-  //float odometryTheta; // theta angle (radiant)
-  //float odometryX ;   // X map position (cm)
-  //float odometryY ;   // Y map position (cm)
   float motorLeftRpmCurr;  // left wheel rpm
   float motorRightRpmCurr; // right wheel rpm
   unsigned long lastMotorRpmTime;
@@ -275,12 +235,7 @@ public:
   PID motorRightPID;          // motor right wheel PID controller
   float motorSenseRightScale; // motor right sense scale (mA=(ADC-zero)/scale)
   float motorSenseLeftScale;  // motor left sense scale  (mA=(ADC-zero)/scale)
-  //int motorRollTimeMax ;  // max. roll time (ms)
-  //int motorRollTimeMin  ; // min. roll time (ms)
-  //int motorReverseTime ;  // max. reverse time (ms)
   long motorForwTimeMax; // max. forward time (ms) / timeout
-  //float motorBiDirSpeedRatio1 ;   // bidir mow pattern speed ratio 1
-  //float motorBiDirSpeedRatio2 ;   // bidir mow pattern speed ratio 2
   bool motorRightSwapDir;   // inverse right motor direction?
   bool motorLeftSwapDir;    // inverse left motor direction?
   int motorLeftSpeedRpmSet; // set speed
@@ -301,8 +256,6 @@ public:
   unsigned long lastSetMotorSpeedTime;
   unsigned long motorLeftZeroTimeout;
   unsigned long motorRightZeroTimeout;
-  boolean rotateLeft;
-  unsigned long nextTimeRotationChange;
   bool motorErrorSense;
   // -------- mower motor state -----------------------
   // mower motor sppeed; range 0..motorMowSpeedMaxPwm
@@ -369,11 +322,11 @@ public:
   // ------- perimeter state --------------------------
   Perimeter perimeter;
   char perimeterUse; // use perimeter?
-  int perimeterOutRollTimeMax;
-  int perimeterOutRollTimeMin;
-  int perimeterOutRevTime;
-  int perimeterTrackRollTime; // perimeter tracking roll time (ms)
-  int perimeterTrackRevTime;  // perimeter tracking reverse time (ms)
+//  int perimeterOutRollTimeMax;
+//  int perimeterOutRollTimeMin;
+//  int perimeterOutRevTime;
+//  int perimeterTrackRollTime; // perimeter tracking roll time (ms)
+//  int perimeterTrackRevTime;  // perimeter tracking reverse time (ms)
   PID perimeterPID;       // perimeter PID controller
   int perimeterLeftMag;       // perimeter magnitude
   int perimeterRightMag;      // perimeter magnitude
@@ -434,16 +387,7 @@ public:
   unsigned long nextTimePfodLoop;
   // ----- ROS -------------------------------------------
   unsigned long rosTimeout;
-  byte rosIdx = 0;
-  String rosString;
-  String rosProt;
-  String rosCmd;
-  String rosPar1;
-  String rosPar2;
-  String rosPar3;
-  String rosPar4;
-  String rosPar5;
-  String rosPar6;
+
   // ----- other -----------------------------------------
   char lastSensorTriggered; // last triggered sensor
   unsigned long lastSensorTriggeredTime;
@@ -454,7 +398,6 @@ public:
   char userSwitch3; // user-defined switch 3 (default value)
   // --------- charging -------------------------------
   char batMonitor;               // monitor battery and charge voltage?
-  float batGoHomeIfBelow;        // drive home voltage (Volt)
   float batSwitchOffIfBelow;     // switch off if below voltage (Volt)
   int batSwitchOffIfIdle;        // switch off battery if idle for minutes
   float batFactor;               // battery conversion factor
@@ -477,10 +420,6 @@ public:
   float chgVoltage;     // charge voltage (Volt)
   float chgCurrent;     // charge current  (Ampere)
   int chgNull;          // Nulldurchgang Ladestromsensor
-  int stationRevTime;   // charge station reverse time (ms)
-  int stationRollTime;  // charge station roll time (ms)
-  int stationForwTime;  // charge station forward time (ms)
-  int stationCheckTime; // charge station reverse check time (ms)
   unsigned long nextTimeBattery;
   unsigned long nextTimeCheckBattery;
   int statsBatteryChargingCounter;
@@ -583,7 +522,9 @@ protected:
   virtual void readSerial();
 
   // Linux ROS
-  virtual void rosSerial();
+  virtual void initROSSerial();
+  virtual void sendROSStatusMessage();
+  virtual void spinOnce();
 
   // check sensor
   virtual void checkButton();
@@ -593,23 +534,20 @@ protected:
   virtual void checkBumpers();
   virtual void checkFreeWheel();
   virtual void checkDrop(); // Dropsensor - Absturzsensor
-  virtual void checkBumpersPerimeter();
   virtual void checkPerimeterBoundary();
-  virtual void checkPerimeterFind();
   virtual void checkLawn();
   virtual void checkSonar();
   virtual void checkTilt();
   virtual void checkRain();
   virtual void checkTimeout();
   virtual void checkOdometryFaults();
-  virtual void checkIfStuck();
   virtual void checkRobotStats();
 
   // motor controllers
   virtual void motorControl();
-  virtual void motorControlImuRoll();
-  virtual void motorControlPerimeter();
-  virtual void motorControlImuDir();
+//  virtual void motorControlImuRoll();
+//  virtual void motorControlPerimeter();
+//  virtual void motorControlImuDir();
   virtual void motorMowControl();
 
   // date & time

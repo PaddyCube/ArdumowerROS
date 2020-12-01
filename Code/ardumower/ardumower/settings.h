@@ -85,11 +85,6 @@ void Robot::loadSaveUserSettings(boolean readflag){
   eereadwrite(readflag, addr, perimeterUse);
   eereadwrite(readflag, addr, perimeter.timedOutIfBelowSmag);        
   eereadwrite(readflag, addr, perimeterTriggerTimeout);
-  eereadwrite(readflag, addr, perimeterOutRollTimeMax);
-  eereadwrite(readflag, addr, perimeterOutRollTimeMin);
-  eereadwrite(readflag, addr, perimeterOutRevTime);
-  eereadwrite(readflag, addr, perimeterTrackRollTime );
-  eereadwrite(readflag, addr, perimeterTrackRevTime);
   eereadwrite(readflag, addr, perimeterPID.Kp);
   eereadwrite(readflag, addr, perimeterPID.Ki);
   eereadwrite(readflag, addr, perimeterPID.Kd);
@@ -108,7 +103,6 @@ void Robot::loadSaveUserSettings(boolean readflag){
   eereadwrite(readflag, addr, imuRollPID.Kd);      
   eereadwrite(readflag, addr, remoteUse);
   eereadwrite(readflag, addr, batMonitor);
-  eereadwrite(readflag, addr, batGoHomeIfBelow);
   eereadwrite(readflag, addr, batSwitchOffIfBelow);  
   eereadwrite(readflag, addr, batSwitchOffIfIdle);  
   eereadwrite(readflag, addr, batFactor);
@@ -117,11 +111,6 @@ void Robot::loadSaveUserSettings(boolean readflag){
   eereadwrite(readflag, addr, chgFactor);
   eereadwrite(readflag, addr, batFullCurrent);
   eereadwrite(readflag, addr, startChargingIfBelow);
-  eereadwrite(readflag, addr, stationRevTime);
-  eereadwrite(readflag, addr, stationRollTime);
-  eereadwrite(readflag, addr, stationForwTime);
-  eereadwrite(readflag, addr, stationCheckTime);
-  eereadwrite(readflag, addr, odometryUse);
   eereadwrite(readflag, addr, odometryTicksPerRevolution);
   //eereadwrite(readflag, addr, odometryTicksPerCm);
   //eereadwrite(readflag, addr, odometryWheelBaseCm);
@@ -297,16 +286,6 @@ void Robot::printSettingSerial(){
   Console.println(perimeterUse,1);
   Console.print  (F("perimeterTriggerTimeout                    : "));
   Console.println(perimeterTriggerTimeout);
-  Console.print  (F("perimeterOutRollTimeMax                    : "));
-  Console.println(perimeterOutRollTimeMax);
-  Console.print  (F("perimeterOutRollTimeMin                    : "));
-  Console.println(perimeterOutRollTimeMin);
-  Console.print  (F("perimeterOutRevTime                        : "));
-  Console.println(perimeterOutRevTime);
-  Console.print  (F("perimeterTrackRollTime                     : "));
-  Console.println(perimeterTrackRollTime);
-  Console.print  (F("perimeterTrackRevTime                      : "));
-  Console.println(perimeterTrackRevTime); 
   Console.print  (F("perimeterPID.Kp                            : "));
   Console.println(perimeterPID.Kp);
   Console.print  (F("perimeterPID.Ki                            : "));
@@ -376,8 +355,6 @@ void Robot::printSettingSerial(){
   Console.println(F("---------- battery -------------------------------------------"));
   Console.print  (F("batMonitor                                 : "));
   Console.println( batMonitor,1);
-  Console.print  (F("batGoHomeIfBelow                           : "));
-  Console.println(batGoHomeIfBelow); 
   Console.print  (F("batSwitchOffIfBelow                        : "));
   Console.println(batSwitchOffIfBelow); 
   Console.print  (F("batSwitchOffIfIdle                         : "));
@@ -399,21 +376,8 @@ void Robot::printSettingSerial(){
   Console.print  (F("chgFactor                                  : "));
   Console.println( chgFactor);
   
-  // ------  charging station -----------------------------------------------------
-  Console.println(F("---------- charging station ----------------------------------"));
-  Console.print  (F("stationRevTime                             : "));
-  Console.println(stationRevTime); 
-  Console.print  (F("stationRollTime                            : "));
-  Console.println(stationRollTime); 
-  Console.print  (F("stationForwTime                            : "));
-  Console.println( stationForwTime);
-  Console.print  (F("stationCheckTime                           : "));
-  Console.println(stationCheckTime); 
-  
   // ------ odometry --------------------------------------------------------------
   Console.println(F("---------- odometry ------------------------------------------"));
-  Console.print  (F("odometryUse                                : "));
-  Console.println( odometryUse,1);
   Console.print  (F("twoWayOdometrySensorUse                    : "));
   Console.println( twoWayOdometrySensorUse,1);
   Console.print  (F("odometryTicksPerRevolution                 : "));
@@ -560,7 +524,6 @@ void Robot::printErrors(){
            case ERR_RTC_COMM:Console.println(F("ERR_RTC_COMM")); break;
            case ERR_RTC_DATA: Console.println(F("ERR_RTC_DATA")); break;
            case ERR_PERIMETER_TIMEOUT:Console.println(F("ERR_PERIMETER_TIMEOUT")); break;
-           case ERR_TRACKING:Console.println(F("ERR_TRACKING")); break;
            case ERR_ODOMETRY_LEFT:Console.println(F("ERR_ODOMETRY_LEFT")); break;
            case ERR_ODOMETRY_RIGHT:Console.println(F("ERR_ODOMETRY_RIGHT")); break;
            case ERR_BATTERY:Console.println(F("ERR_BATTERY")); break;
@@ -570,7 +533,6 @@ void Robot::printErrors(){
            case ERR_ADC_CALIB:Console.println(F("ERR_ADC_CALIB")); break;
            case ERR_IMU_CALIB:Console.println(F("ERR_IMU_CALIB")); break;
            case ERR_EEPROM_DATA:Console.println(F("ERR_EEPROM_DATA")); break;
-           case ERR_STUCK:Console.println(F("ERR_STUCK")); break;
         }
       }
     }
@@ -611,26 +573,25 @@ void Robot::checkRobotStats(){
 
     }
 
-//---------------stats Battery---------------------------------------------------------
-  if ((stateCurr == STATE_STATION_CHARGING) && (stateTime >= 60000)){ // count only if mower is charged longer then 60sec
-    statsBatteryChargingCounter++; // temporary counter
-    if (statsBatteryChargingCounter == 1) statsBatteryChargingCounterTotal +=1; 
-    statsBatteryChargingCapacityTrip = batCapacity;
-    statsBatteryChargingCapacityTotal += (batCapacity - lastTimeBatCapacity); // summ up only the difference between actual batCapacity and last batCapacity
-    lastTimeBatCapacity = batCapacity;
-  }
-  else{                         // resets values to 0 when mower is not charging
-    statsBatteryChargingCounter = 0; 
-    batCapacity = 0;
-  }
-
-  if(isnan(statsBatteryChargingCapacityTrip)) statsBatteryChargingCapacityTrip = 0;
-  if(isnan(statsBatteryChargingCounterTotal)) statsBatteryChargingCounterTotal = 0; // for first run ensures that the counter is 0
-  if(isnan(statsBatteryChargingCapacityTotal)) statsBatteryChargingCapacityTotal = 0; // for first run ensures that the counter is 0
-  if(statsBatteryChargingCapacityTotal <= 0 || statsBatteryChargingCounterTotal == 0) statsBatteryChargingCapacityAverage = 0; // make sure that there is no dividing by zero
-    else statsBatteryChargingCapacityAverage = statsBatteryChargingCapacityTotal / statsBatteryChargingCounterTotal;
+////---------------stats Battery---------------------------------------------------------
+//  if ((stateCurr == STATE_STATION_CHARGING) && (stateTime >= 60000)){ // count only if mower is charged longer then 60sec
+//    statsBatteryChargingCounter++; // temporary counter
+//    if (statsBatteryChargingCounter == 1) statsBatteryChargingCounterTotal +=1; 
+//    statsBatteryChargingCapacityTrip = batCapacity;
+//    statsBatteryChargingCapacityTotal += (batCapacity - lastTimeBatCapacity); // summ up only the difference between actual batCapacity and last batCapacity
+//    lastTimeBatCapacity = batCapacity;
+//  }
+//  else{                         // resets values to 0 when mower is not charging
+//    statsBatteryChargingCounter = 0; 
+//    batCapacity = 0;
+//  }
+//
+//  if(isnan(statsBatteryChargingCapacityTrip)) statsBatteryChargingCapacityTrip = 0;
+//  if(isnan(statsBatteryChargingCounterTotal)) statsBatteryChargingCounterTotal = 0; // for first run ensures that the counter is 0
+//  if(isnan(statsBatteryChargingCapacityTotal)) statsBatteryChargingCapacityTotal = 0; // for first run ensures that the counter is 0
+//  if(statsBatteryChargingCapacityTotal <= 0 || statsBatteryChargingCounterTotal == 0) statsBatteryChargingCapacityAverage = 0; // make sure that there is no dividing by zero
+//    else statsBatteryChargingCapacityAverage = statsBatteryChargingCapacityTotal / statsBatteryChargingCounterTotal;
 
 
 //----------------new stats goes here------------------------------------------------------
 }
-

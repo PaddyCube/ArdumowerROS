@@ -97,8 +97,6 @@ class RemoteControl
     void sendCommandMenu(boolean update);
     void processCommandMenu(String pfodCmd);
     void sendManualMenu(boolean update);
-    void sendCompassMenu(boolean update);
-    void processCompassMenu(String pfodCmd);
     void processManualMenu(String pfodCmd);
     void processSettingsMenu(String pfodCmd);      
     
@@ -118,7 +116,7 @@ class RemoteControl
     void sendImuMenu(boolean update);
     void sendRemoteMenu(boolean update);
     void sendBatteryMenu(boolean update);    
-    void sendStationMenu(boolean update);
+   
     void sendOdometryMenu(boolean update);
     void sendRainMenu(boolean update);    
     void sendGPSMenu(boolean update);        
@@ -140,7 +138,6 @@ class RemoteControl
     void processImuMenu(String pfodCmd);         
     void processRemoteMenu(String pfodCmd);      
     void processBatteryMenu(String pfodCmd);
-    void processStationMenu(String pfodCmd);
     void processOdometryMenu(String pfodCmd);      
     void processDateTimeMenu(String pfodCmd);
     void processFactorySettingsMenu(String pfodCmd); 
@@ -157,5 +154,3 @@ class RemoteControl
 
 
 #endif
-
-

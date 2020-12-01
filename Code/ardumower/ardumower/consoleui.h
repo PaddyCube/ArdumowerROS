@@ -41,7 +41,7 @@ String Robot::waitStringConsole() {
     Streamprint(s, "  in %2d  cnt %4d  on %1d\r\n",  
       (int)perimeterLeftInside, perimeterLeftCounter, (int)(!perimeter.signalTimedOut(0)) );      
   } else {  
-    if (odometryUse) Streamprint(s, "rpm %4d %4d ", (int)motorLeftRpmCurr, (int)motorRightRpmCurr);   
+    Streamprint(s, "rpm %4d %4d ", (int)motorLeftRpmCurr, (int)motorRightRpmCurr);   
     Streamprint(s, "set %4d %4d ", (int)motorLeftSpeedRpmSet, (int)motorRightSpeedRpmSet);
     if (consoleMode == CONSOLE_SENSOR_VALUES){
       // sensor values
@@ -432,10 +432,7 @@ void Robot::readSerial() {
   if (Console.available() > 0) {     
     // String cmd = Console.readString();
      String cmd = waitStringConsole();
-     if (cmd.startsWith("$ROS")) {
-       setNextState(STATE_ROS, 0);
-       return;
-     }
+
      char ch = cmd[0];
    //  if (!rmcsUse){
         resetIdleTime();
@@ -448,12 +445,6 @@ void Robot::readSerial() {
          consoleMode = (consoleMode +1) % 4;
          Console.println(consoleModeNames[consoleMode]);
          break; 
-       case 'h':
-         setNextState(STATE_PERI_FIND, 0); // press 'h' to drive home
-         break; 
-       case 't':
-         setNextState(STATE_PERI_TRACK, 0); // press 'p' to track perimeter
-         break;
        case 'l':
          bumperLeft = true; // press 'l' to simulate left bumper
          bumperLeftCounter++;
@@ -477,20 +468,6 @@ void Robot::readSerial() {
        case 'm':                  
          motorMowEnable = !motorMowEnable; // press 'm' to toggle mower motor
          break;
-       case 'c':
-         setNextState(STATE_STATION, 0); // press 'c' to simulate in station
-         break;
-       case 'a':
-         setNextState(STATE_STATION_CHARGING, 0); // press 't' to simulate in station charging
-         break;
-       case '+':
-         setNextState(STATE_ROLL_WAIT, 0); // press '+' to rotate 90 degrees (IMU)
-         imuRollHeading = scalePI(imuRollHeading + PI/2);
-         break;
-       case '-':
-         setNextState(STATE_ROLL_WAIT, 0); // press '+' to rotate 90 degrees (IMU)
-         imuRollHeading = scalePI(imuRollHeading - PI/2);
-         break;
        case 'i':
          // press 'i' to toggle imuUse
          imuUse = !imuUse;
@@ -511,4 +488,3 @@ void Robot::readSerial() {
 	 }
   }    
 }
-
