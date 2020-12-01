@@ -216,6 +216,8 @@ Robot::Robot()
   nextTimeRobotStats = 0;
   statsMowTimeMinutesTripCounter = 0;
   statsBatteryChargingCounter = 0;
+
+  nextTimeROSStatusMsg = 0;
 }
 
 void Robot::setSensorTriggered(char type)
@@ -337,6 +339,13 @@ void Robot::setup()
   Console.println(F("-------------------------------------------"));
 
   // ROS read serial console here before starting ROS nodes
+
+delay(5000);
+      readSerial();
+   // rc.readSerial();
+   //resetIdleTime();
+   Console.println("Init ROSSerial");
+   initROSSerial();
 }
 
 void Robot::checkButton()
@@ -1073,8 +1082,9 @@ void Robot::loop()
 
   // ROS no read of serial console in loop, only setup
   /*   if (stateCurr != STATE_ROS) */
-//    readSerial();
-//    rc.readSerial(); resetIdleTime();
+  
+    rc.readSerial();
+   //resetIdleTime();
   
   readSensors();
   checkBattery();
@@ -1205,5 +1215,7 @@ void Robot::loop()
   loopsPerSecCounter++;
 
  // ROS send status message
+ //sendROSStatusMessage();
  // spin once 
+ //spinOnce();
 }

@@ -322,11 +322,6 @@ public:
   // ------- perimeter state --------------------------
   Perimeter perimeter;
   char perimeterUse; // use perimeter?
-//  int perimeterOutRollTimeMax;
-//  int perimeterOutRollTimeMin;
-//  int perimeterOutRevTime;
-//  int perimeterTrackRollTime; // perimeter tracking roll time (ms)
-//  int perimeterTrackRevTime;  // perimeter tracking reverse time (ms)
   PID perimeterPID;       // perimeter PID controller
   int perimeterLeftMag;       // perimeter magnitude
   int perimeterRightMag;      // perimeter magnitude
@@ -387,6 +382,8 @@ public:
   unsigned long nextTimePfodLoop;
   // ----- ROS -------------------------------------------
   unsigned long rosTimeout;
+  unsigned long nextTimeROSStatusMsg;
+  
 
   // ----- other -----------------------------------------
   char lastSensorTriggered; // last triggered sensor

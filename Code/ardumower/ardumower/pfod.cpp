@@ -1567,8 +1567,8 @@ bool RemoteControl::readSerial()
     if (serialPort->available() > 0)
     {
       char ch = serialPort->read();
-      //Console.print("pfod ch=");
-      //Console.println(ch);
+     // Console.print("pfod ch=");
+     // Console.println(ch);
       if (ch == '}')
         pfodCmdComplete = true;
       else if (ch == '{')

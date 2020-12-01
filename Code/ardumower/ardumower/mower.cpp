@@ -34,7 +34,7 @@ Mower robot;
 
 Mower::Mower(){
   #if defined (ROBOT_ARDUMOWER)
-    name = "ArdumowerTurlebot"; //Set the Name of BT
+    name = "ArdumowerTurtlebot"; //Set the Name of BT
   #else
     name = "Mini";
   #endif
@@ -432,9 +432,10 @@ void Mower::setup(){
   ADCMan.setCapture(pinVoltageMeasurement, 1, false);    
   perimeter.setPins(pinPerimeterLeft, pinPerimeterRight);    
 
-  imu.init();
+// ARDUMOWERROS
+  //imu.init();
 	  
-  gps.init();
+  //gps.init();
 
   Robot::setup();  
 
