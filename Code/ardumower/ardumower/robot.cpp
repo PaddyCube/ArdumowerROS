@@ -29,7 +29,6 @@ In any case we reach an error state, inform ROS by sending a event and stop ROS 
 Console.println to display in console what happens.
 
 */
-
 #include "robot.h"
 #include "config.h"
 #include "i2c.h"
@@ -54,12 +53,11 @@ const char *consoleModeNames[] = {"sen_counters", "sen_values", "perimeter", "of
 // --- split robot class ----
 #include "battery.h"
 #include "consoleui.h"
-#include "ros_driver.h"
 #include "motor.h"
 #include "buzzer.h"
 #include "modelrc.h"
 #include "settings.h"
-
+#include "ros_driver.h"
 // -----------------------------
 
 // Spannungsteiler Gesamtspannung ermitteln (Reihenschaltung R1-R2, U2 bekannt, U_GES zu ermitteln)
@@ -302,21 +300,32 @@ void Robot::setup()
 
   stateStartTime = millis();
   beep(1);
-  Console.println(F("-------------------START-------------------"));
-  Console.print(F("Ardumower ROS"));
-  Console.print(VER);
-  Console.print(F("  "));
+     beep(3,true);
+   delay(500);
+   initROSSerial();
+  // initROSSerial(Console);
+   sendROSDebugInfo(ROS_DEBUG, "SETUP");
+   
+//  Console.println(F("-------------------START-------------------"));
+sendROSDebugInfo(ROS_INFO, "Ardumower ROS");
+ // Console.print(F("Ardumower ROS"));
+  //Console.print(VER);
+ // Console.print(F("  "));
 #if defined(PCB_1_2)
-  Console.print(F("PCB 1.2"));
+sendROSDebugInfo(ROS_DEBUG, "PCB 1_2");
+ // Console.print(F("PCB 1.2"));
 #elif defined(PCB_1_3)
-  Console.print(F("PCB 1.3"));
+sendROSDebugInfo(ROS_DEBUG, "PCB 1_3");
+//  Console.print(F("PCB 1.3"));
 #endif
 #ifdef __AVR__
-  Console.print(F("  Arduino Mega"));
+ // Console.print(F("  Arduino Mega"));
+ sendROSDebugInfo(ROS_DEBUG, "Arduino Mega");
 #else
-  Console.print(F("  Arduino Due"));
+ // Console.print(F("  Arduino Due"));
+ sendROSDebugInfo(ROS_DEBUG, "Arduino Due");
 #endif
-  Console.print(F("  IOREF="));
+ /* Console.print(F("  IOREF="));
   Console.println(IOREF);
 
   Console.print(F("Robot: "));
@@ -345,7 +354,10 @@ delay(5000);
    // rc.readSerial();
    //resetIdleTime();
    Console.println("Init ROSSerial");
-   initROSSerial();
+   delay(500);
+   Console.end();
+*/
+
 }
 
 void Robot::checkButton()
@@ -360,7 +372,8 @@ void Robot::checkButton()
     nextTimeButton = millis() + 1000;
     if (buttonPressed)
     {
-      Console.println(F("buttonPressed"));
+      sendROSDebugInfo(ROS_DEBUG, "buttonPressed");
+      //Console.println(F("buttonPressed"));
       // ON/OFF button pressed
       beep(1);
       buttonCounter++;
@@ -1083,12 +1096,12 @@ void Robot::loop()
   // ROS no read of serial console in loop, only setup
   /*   if (stateCurr != STATE_ROS) */
   
-    rc.readSerial();
+   // rc.readSerial();
    //resetIdleTime();
   
   readSensors();
   checkBattery();
-  checkRobotStats();
+/*  checkRobotStats();
   calcOdometry();
   checkOdometryFaults();
   checkButton();
@@ -1119,12 +1132,15 @@ void Robot::loop()
 
     // ROS send info for debugging
     ledState = ~ledState;
-    /*if (ledState) setActuator(ACT_LED, HIGH);
-      else setActuator(ACT_LED, LOW);        */
+    
     //checkErrorCounter();
-    if (stateCurr == STATE_REMOTE)
-       printRemote();
+    
+    if (stateCurr == STATE_REMOTE){
+    //   printRemote();
+    }
+    
       loopsPerSec = loopsPerSecCounter;
+      
     if (stateCurr != STATE_ERROR)
     {
       if (loopsPerSec < 10)
@@ -1149,7 +1165,7 @@ void Robot::loop()
     loopsPerSecCounter = 0;
   }
 
-
+*/
 // Process ROS commands here
 
   // state machine - things to do *PERMANENTLY* for current state
@@ -1179,18 +1195,18 @@ void Robot::loop()
     imuDriveHeading = imu.ypr.yaw;
     break;
 
-  case STATE_REMOTE:
-    // remote control mode (RC)
-    //if (remoteSwitch > 50) setNextState(STATE_FORWARD, 0);
-    steer = ((double)motorSpeedMaxRpm / 2) * (((double)remoteSteer) / 100.0);
-    if (remoteSpeed < 0)
-      steer *= -1;
-    motorLeftSpeedRpmSet = ((double)motorSpeedMaxRpm) * (((double)remoteSpeed) / 100.0) - steer;
-    motorRightSpeedRpmSet = ((double)motorSpeedMaxRpm) * (((double)remoteSpeed) / 100.0) + steer;
-    motorLeftSpeedRpmSet = max(-motorSpeedMaxRpm, min(motorSpeedMaxRpm, motorLeftSpeedRpmSet));
-    motorRightSpeedRpmSet = max(-motorSpeedMaxRpm, min(motorSpeedMaxRpm, motorRightSpeedRpmSet));
-    motorMowSpeedPWMSet = ((double)motorMowSpeedMaxPwm) * (((double)remoteMow) / 100.0);
-    break;
+//  case STATE_REMOTE:
+//    // remote control mode (RC)
+//    //if (remoteSwitch > 50) setNextState(STATE_FORWARD, 0);
+//    steer = ((double)motorSpeedMaxRpm / 2) * (((double)remoteSteer) / 100.0);
+//    if (remoteSpeed < 0)
+//      steer *= -1;
+//    motorLeftSpeedRpmSet = ((double)motorSpeedMaxRpm) * (((double)remoteSpeed) / 100.0) - steer;
+//    motorRightSpeedRpmSet = ((double)motorSpeedMaxRpm) * (((double)remoteSpeed) / 100.0) + steer;
+//    motorLeftSpeedRpmSet = max(-motorSpeedMaxRpm, min(motorSpeedMaxRpm, motorLeftSpeedRpmSet));
+//    motorRightSpeedRpmSet = max(-motorSpeedMaxRpm, min(motorSpeedMaxRpm, motorRightSpeedRpmSet));
+//    motorMowSpeedPWMSet = ((double)motorMowSpeedMaxPwm) * (((double)remoteMow) / 100.0);
+//    break;
  
   
   } // end switch
@@ -1215,7 +1231,8 @@ void Robot::loop()
   loopsPerSecCounter++;
 
  // ROS send status message
- //sendROSStatusMessage();
+ sendROSStatusMessage();
+// sendROSStatusMessage(Console);
  // spin once 
- //spinOnce();
+ spinOnce();
 }

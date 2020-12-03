@@ -223,6 +223,8 @@ Mower::Mower(){
   statsBatteryChargingCounterTotal  = 11;
   statsBatteryChargingCapacityTotal = 30000;
   
+  // ------ ROS configuration-------------------------------------------  
+   ROSDebugVerbose = true; // true for verbose info (slow) 
   
   // -----------configuration end-------------------------------------
 }
@@ -312,18 +314,19 @@ void Mower::setup(){
   digitalWrite(pinBatterySwitch, HIGH);
 
   Buzzer.begin();
-	Console.begin(CONSOLE_BAUDRATE);  
+	//Console.begin(CONSOLE_BAUDRATE);  
 	I2Creset();	
   Wire.begin();            			
   unsigned long timeout = millis() + 10000;
 	while (millis() < timeout){
     if (!checkAT24C32()){
-      Console.println(F("PCB not powered ON or RTC module missing"));
+  //    Console.println(F("PCB not powered ON or RTC module missing"));
       delay(1000);
     } else break;
 	}
 	ADCMan.init();
-  Console.println(F("SETUP"));
+ // Console.println(F("SETUP"));
+
   
   // LED, buzzer, battery
   pinMode(pinLED, OUTPUT);    
@@ -440,7 +443,7 @@ void Mower::setup(){
   Robot::setup();  
 
   if (esp8266Use) {
-    Console.println(F("Sending ESP8266 Config"));
+  //  Console.println(F("Sending ESP8266 Config"));
     ESP8266port.begin(ESP8266_BAUDRATE);
     ESP8266port.println(esp8266ConfigString);
     ESP8266port.flush();

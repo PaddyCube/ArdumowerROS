@@ -38,6 +38,7 @@
 #include "drivers.h"
 #include "pid.h"
 #include "imu.h"
+
 #include "adcman.h"
 #include "perimeter.h"
 #include "gps.h"
@@ -46,14 +47,13 @@
 
 //#include "QueueList.h"
 //#include <limits.h>
-#include <ros.h>
+ #include <ros.h> // include modified version of ros.h as it has been changed in package size
 // choose PCB
 
 /*
   Generic robot class - subclass to implement concrete hardware!
 
 */
-
 // code version
 #define VER "1.0a10-dev Azurit"
 
@@ -146,6 +146,16 @@ enum
   CONSOLE_SENSOR_VALUES,
   CONSOLE_PERIMETER,
   CONSOLE_OFF
+};
+
+// ROS Debug Types
+enum
+{
+  ROS_DEBUG,
+  ROS_INFO,
+  ROS_WARN,
+  ROS_ERROR,
+  ROS_FATAL
 };
 
 #define MAX_TIMERS 5
@@ -383,6 +393,7 @@ public:
   // ----- ROS -------------------------------------------
   unsigned long rosTimeout;
   unsigned long nextTimeROSStatusMsg;
+  boolean ROSDebugVerbose;
   
 
   // ----- other -----------------------------------------
@@ -520,8 +531,10 @@ protected:
 
   // Linux ROS
   virtual void initROSSerial();
+  //virtual void sendROSStatusMessage(Stream &s);
   virtual void sendROSStatusMessage();
   virtual void spinOnce();
+  virtual void sendROSDebugInfo(int type, char *);
 
   // check sensor
   virtual void checkButton();

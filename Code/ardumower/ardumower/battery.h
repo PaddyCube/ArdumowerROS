@@ -6,6 +6,7 @@ void Robot::checkBattery(){
 	nextTimeCheckBattery = millis() + 1000;  
   if (batVoltage < 4.0){      
     // ROS raise error battery
+    sendROSDebugInfo(ROS_FATAL, "BATTERY NOT FOUND");
     //Console.println(F("BATTERY NOT FOUND - PLEASE SWITCH ON BATTERY!")); 
   }
     
@@ -22,7 +23,7 @@ void Robot::checkBattery(){
 			loadSaveErrorCounters(false); // saves error counters
       loadSaveRobotStats(false);    // saves robot stats
       idleTimeSec = BATTERY_SW_OFF; // flag to remember that battery is switched off
-      Console.println(F("BATTERY switching OFF"));
+   //   Console.println(F("BATTERY switching OFF"));
 
 		// ROS raise shutdown, RPI must be shutdown
 /*       if (rmcsUse)  // tell Raspberry PI to shutdown
