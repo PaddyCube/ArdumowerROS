@@ -45,11 +45,6 @@
 #include "pfod.h"
 #include "RunningMedian.h"
 
-//#include "QueueList.h"
-//#include <limits.h>
- #include <ros.h> // include modified version of ros.h as it has been changed in package size
-// choose PCB
-
 /*
   Generic robot class - subclass to implement concrete hardware!
 
@@ -60,6 +55,7 @@
 // sensors
 enum
 {
+  SEN_STATUS,
   SEN_PERIM_LEFT,        // 0..MAX_PERIMETER
   SEN_PERIM_RIGHT,       // 0..MAX_PERIMETER
   SEN_LAWN_FRONT,
@@ -83,7 +79,7 @@ enum
   SEN_RTC,
   SEN_RAIN,
   SEN_TILT,
-  SEN_FREE_WHEEL,
+  SEN_FREE_WHEEL
 };
 
 // actuators
@@ -126,6 +122,7 @@ enum
   ERR_CPU_SPEED,
   // <---- add new error types here (NOTE: increase MAGIC to avoid corrupt EEPROM error data!)
   ERR_ENUM_COUNT,
+  ERR_ROS
 };
 
 // finate state machine states
@@ -392,7 +389,7 @@ public:
   unsigned long nextTimePfodLoop;
   // ----- ROS -------------------------------------------
   unsigned long rosTimeout;
-  unsigned long nextTimeROSStatusMsg;
+  unsigned long ROSlastMessageID;
   boolean ROSDebugVerbose;
   
 
@@ -449,7 +446,6 @@ public:
   byte consoleMode;
   unsigned long nextTimeButtonCheck;
   unsigned long nextTimeInfo;
-  unsigned long nextTimeROS;
   byte rollDir;
   unsigned long nextTimeButton;
   unsigned long nextTimeErrorCounterReset;
@@ -529,12 +525,14 @@ protected:
   // read serial
   virtual void readSerial();
 
-  // Linux ROS
+  // ROS interface
   virtual void initROSSerial();
-  //virtual void sendROSStatusMessage(Stream &s);
-  virtual void sendROSStatusMessage();
   virtual void spinOnce();
   virtual void sendROSDebugInfo(int type, char *);
+  virtual void readROSSerial();
+  virtual void processROSCommand(String command);
+  virtual void responseHeartBeat();
+  virtual void responseStatus();
 
   // check sensor
   virtual void checkButton();
