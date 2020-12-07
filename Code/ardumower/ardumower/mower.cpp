@@ -89,7 +89,7 @@ Mower::Mower(){
   freeWheelUse               = 0;          // has free wheel sensor?  
   
   //  ------ bumper (BumperDuino)-------------------------------
-  bumperUse                  = 0;          // has bumpers?
+  bumperUse                  = 1;          // has bumpers?
   tiltUse                    = 0;          // use tilt-sensor?
   
   //  ------ drop -----------------------------------
@@ -100,7 +100,7 @@ Mower::Mower(){
   rainUse                    = 0;          // use rain sensor?
   
   // ------ sonar ------------------------------------
-  sonarUse                   = 0;          // use ultra sonic sensor? (WARNING: robot will slow down, if enabled but not connected!)
+  sonarUse                   = 1;          // use ultra sonic sensor? (WARNING: robot will slow down, if enabled but not connected!)
   sonarLeftUse               = 1;
   sonarRightUse              = 1;
   sonarCenterUse             = 0;
@@ -174,26 +174,8 @@ Mower::Mower(){
 	 batChargingCurrentMax       = 1.6;       // maximum current your charger can devliver  
 
   // ------ odometry ------------------------------------
-
-  
-	#if defined (ROBOT_ARDUMOWER)
-	  odometryTicksPerRevolution = 1060;       // encoder ticks per one full resolution (without any divider)
-	//	wheelDiameter              = 250;        // wheel diameter (mm)
-	//	odometryWheelBaseCm        = 36;         // wheel-to-wheel distance (cm)
 		odoLeftRightCorrection     = true;       // left-right correction for straight lines?
-  #else  // ROBOT_MINI		
-		odometryTicksPerRevolution = 20;      // encoder ticks per one full resolution
-	//	wheelDiameter              = 70;        // wheel diameter (mm)
-	//	odometryWheelBaseCm        = 14;         // wheel-to-wheel distance (cm)
-		odoLeftRightCorrection     = false; 		 // left-right correction for straight lines?
-	#endif
-		
-  #if defined (PCB_1_3)    
-		#define DIVIDER_DIP_SWITCH  2             //  sets used PCB odometry divider (2=DIV/2, 4=DIV/4, 8=DIV/8, etc.) 
-		odometryTicksPerRevolution /= DIVIDER_DIP_SWITCH;        // encoder ticks per one full resolution 
-  #endif
-  //odometryTicksPerCm         = ((float)odometryTicksPerRevolution) / (((float)wheelDiameter)/10.0) / (3.1415);    // computes encoder ticks per cm (do not change)
-  
+
   // ----- GPS -------------------------------------------
   gpsUse                     = 0;          // use GPS?
   stuckIfGpsSpeedBelow       = 0.2;        // if Gps speed is below given value the mower is stuck

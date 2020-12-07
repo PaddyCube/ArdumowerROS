@@ -1080,22 +1080,22 @@ void Robot::loop()
 
   readSensors();
   checkBattery();
-  /*  checkRobotStats();
-    calcOdometry();
-    checkOdometryFaults();
+  //  checkRobotStats();
+  //  calcOdometry();
+ //   checkOdometryFaults();
     checkButton();
-    motorMowControl();
-    checkTilt();
+  //  motorMowControl();
+  //  checkTilt();
 
-    if (imuUse)
-      imu.update();
+  //  if (imuUse)
+  //    imu.update();
 
-    if (gpsUse)
-    {
-      gps.feed();
-      processGPSData();
-    }
-  */
+//    if (gpsUse)
+//    {
+//      gps.feed();
+//      processGPSData();
+//    }
+
   if (millis() >= nextTimePfodLoop)
   {
     nextTimePfodLoop = millis() + 200;
@@ -1108,7 +1108,7 @@ void Robot::loop()
 
     // ROS send info for debugging
     ledState = ~ledState;
-
+    sendROSDebugInfo(ROS_DEBUG, "alive");
     //checkErrorCounter();
 
     if (stateCurr == STATE_REMOTE) {

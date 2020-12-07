@@ -111,7 +111,7 @@ void Robot::loadSaveUserSettings(boolean readflag){
   eereadwrite(readflag, addr, chgFactor);
   eereadwrite(readflag, addr, batFullCurrent);
   eereadwrite(readflag, addr, startChargingIfBelow);
-  eereadwrite(readflag, addr, odometryTicksPerRevolution);
+  //eereadwrite(readflag, addr, odometryTicksPerRevolution);
   //eereadwrite(readflag, addr, odometryTicksPerCm);
   //eereadwrite(readflag, addr, odometryWheelBaseCm);
   eereadwrite(readflag, addr, odometryLeftSwapDir);
@@ -380,8 +380,8 @@ void Robot::printSettingSerial(){
   Console.println(F("---------- odometry ------------------------------------------"));
   Console.print  (F("twoWayOdometrySensorUse                    : "));
   Console.println( twoWayOdometrySensorUse,1);
-  Console.print  (F("odometryTicksPerRevolution                 : "));
-  Console.println( odometryTicksPerRevolution);
+ // Console.print  (F("odometryTicksPerRevolution                 : "));
+ // Console.println( odometryTicksPerRevolution);
   //Console.print  (F("odometryTicksPerCm                         : "));
   //Console.println( odometryTicksPerCm);
   //Console.print  (F("odometryWheelBaseCm                        : "));
@@ -496,10 +496,10 @@ void Robot::deleteRobotStats(){
   Console.println(F("ALL STATISTICS DELETED!")); 
 }
 
-void Robot::addErrorCounter(byte errType){   
+void Robot::addErrorCounter(byte errType){
   // increase error counters (both temporary and maximum error counters)
   if (errorCounter[errType] < 255) errorCounter[errType]++;
-  if (errorCounterMax[errType] < 255) errorCounterMax[errType]++;    
+  if (errorCounterMax[errType] < 255) errorCounterMax[errType]++;
 }
 
 void Robot::resetErrorCounters(){

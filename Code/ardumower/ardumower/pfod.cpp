@@ -940,11 +940,7 @@ void RemoteControl::sendOdometryMenu(boolean update)
   serialPort->print(robot->motorLeftRpmCurr);
   serialPort->print(", ");
   serialPort->println(robot->motorRightRpmCurr);
-  sendSlider("l06", F("Speed max in rpm"), robot->motorSpeedMaxRpm, "", 1, 100);
   sendPIDSlider("l07", "RPM", robot->motorLeftPID, 0.01, 3.0);
-  sendSlider("l04", F("Ticks per one full revolution"), robot->odometryTicksPerRevolution, "", 1, 2120);
-  //sendSlider("l01", F("Ticks per cm"), robot->odometryTicksPerCm, "", 0.1, 35);
-  //sendSlider("l02", F("Wheel base cm"), robot->odometryWheelBaseCm, "", 0.1, 50);
   serialPort->println(F("|l05~Testing is"));
   switch (testmode)
   {
@@ -963,10 +959,11 @@ void RemoteControl::sendOdometryMenu(boolean update)
 
 void RemoteControl::processOdometryMenu(String pfodCmd)
 {
-   if (pfodCmd.startsWith("l04"))
-    processSlider(pfodCmd, robot->odometryTicksPerRevolution, 1);
+ //  if (pfodCmd.startsWith("l04"))
+   // processSlider(pfodCmd, robot->odometryTicksPerRevolution, 1);
   //else if (pfodCmd.startsWith("l08")) robot->twoWayOdometrySensorUse = !robot->twoWayOdometrySensorUse;
-  else if (pfodCmd == "l05")
+  //else
+	  if (pfodCmd == "l05")
   {
     testmode = (testmode + 1) % 3;
     switch (testmode)

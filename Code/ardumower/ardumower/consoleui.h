@@ -177,12 +177,12 @@ void Robot::testOdometry() {
             lastRight = odometryRight;
           }
 
-          if ((odometryLeft >= odometryTicksPerRevolution) || (odometryRight >= odometryTicksPerRevolution))
-          {
-            motorLeftPWMCurr = 0; motorRightPWMCurr = 0;
-            setMotorPWM(motorLeftPWMCurr, motorRightPWMCurr, false);
-            break;
-          }
+//          if ((odometryLeft >= odometryTicksPerRevolution) || (odometryRight >= odometryTicksPerRevolution))
+//          {
+//            motorLeftPWMCurr = 0; motorRightPWMCurr = 0;
+//            setMotorPWM(motorLeftPWMCurr, motorRightPWMCurr, false);
+//            break;
+//          }
         }
       }
     }

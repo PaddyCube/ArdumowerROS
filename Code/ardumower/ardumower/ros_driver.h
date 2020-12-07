@@ -23,7 +23,8 @@
 //  $LW Warning message to ROS base controller (Arduino -> ROS)
 //  $LE Error message to ROS base controller (Arduino -> ROS)
 //  $LF Fatal message to ROS base controller (Arduino -> ROS)
-
+//
+//
 //
 // NOTE: use high baud rates for this serial interface (in mower.h, configure CONSOLE_BAUDRATE to 115200 baud)
 
@@ -37,11 +38,23 @@ enum {
   HEARTBEAT, REQUEST, RESPONSE, MOTORREQUEST, MOTORRESPONSE, EVENT
 };
 
+// ROS sensor requests
+enum {
+  ROS_SEN_STATUS,
+  ROS_SEN_PERIM,
+  ROS_SEN_BAT,
+  ROS_SEN_MOTOR,
+  ROS_SEN_ODOM,
+  ROS_SEN_BUMPER,
+  ROS_SEN_DROP,
+  ROS_SEN_SONAR,
+  ROS_SEN_IMU,
+  ROS_SEN_RAIN,
+  ROS_SEN_FREE_WHEEL
+};
 void Robot::initROSSerial() {
   Console.begin(CONSOLE_BAUDRATE);
 }
-
-
 
 void Robot::sendROSDebugInfo(int type, char *message) {
   switch (type) {
@@ -136,11 +149,31 @@ void Robot::processROSCommand(String command) {
           responseHeartBeat();
           break;
         case REQUEST:
-
           // Check which sensor was requested
           switch (commandParts[1].toInt()) {
-            case SEN_STATUS:
+            case ROS_SEN_STATUS:
               responseStatus();
+              break;
+            case ROS_SEN_PERIM:
+              responsePerimeter();
+              break;
+            case ROS_SEN_BAT:
+              responseBattery();
+              break;
+            case ROS_SEN_MOTOR:
+              responseMotor();
+              break;
+            case ROS_SEN_ODOM:
+              responseOdometry();
+              break;
+            case ROS_SEN_BUMPER:
+              responseBumper();
+              break;
+            case ROS_SEN_SONAR:
+              responseSonar();
+              break;
+            default:
+              sendROSDebugInfo(ROS_ERROR, "invalid sensor requested");
               break;
           }
 
@@ -161,19 +194,121 @@ void Robot::responseStatus() {
   Console.print("$RS|");
   Console.print(ROSlastMessageID);
   Console.print('|');
+  Console.print(ROS_SEN_STATUS);
+  Console.print('|');
   Console.print(loopsPerSec);
   Console.print('|');
   Console.print(stateNames[stateCurr]);
   Console.print('|');
-  Console.print("E000");
+  Console.println("E000");
+
+}
+
+void Robot::responseBattery() {
+  Console.print("$RS|");
+  Console.print(ROSlastMessageID);
+  Console.print('|');
+  Console.print(ROS_SEN_BAT);
   Console.print('|');
   Console.print(batVoltage);
   Console.print('|');
   Console.print(chgVoltage);
   Console.print('|');
   Console.println(chgCurrent);
+}
+
+void Robot::responsePerimeter() {
+  Console.print("$RS|");
+  Console.print(ROSlastMessageID);
+  Console.print('|');
+  Console.print(ROS_SEN_PERIM);
+  Console.print('|');
+  Console.print(perimeterLeftInside);
+  Console.print('|');
+  Console.print(perimeterRightInside);
+  Console.print('|');
+  Console.print(perimeterLeftMag);
+  Console.print('|');
+  Console.print(perimeterRightMag);
+  Console.print('|');
+  Console.print(perimeterLastTransitionTime);
+  Console.print('|');
+  Console.println(perimeterTriggerTimeout);
+}
+
+void Robot::responseMotor() {
+  Console.print("$RS|");
+  Console.print(ROSlastMessageID);
+  Console.print('|');
+  Console.print(ROS_SEN_MOTOR);
+  Console.print('|');
+  Console.print(motorLeftPWMCurr);
+  Console.print('|');
+  Console.print(motorRightPWMCurr);
+  Console.print('|');
+  Console.print(motorLeftSense);  // Power usage in W
+  Console.print('|');
+  Console.print(motorRightSense);
+  Console.print('|');
+  Console.print(motorLeftSenseCurrent); // Current in mA
+  Console.print('|');
+  Console.print(motorRightSenseCurrent);
+  Console.print('|');
+  Console.print(motorLeftSenseCounter);  // overload counters
+  Console.print('|');
+  Console.print(motorRightSenseCounter);
+  Console.print('|');
+  Console.print(motorMowEnable); // mow motor enable
+  Console.print('|');
+  Console.print(motorMowSense);  // Power in W
+  Console.print('|');
+  Console.print(motorMowSenseCurrent); // current in mA
+  Console.print('|');
+  Console.println(motorMowSenseCounter); // overload counter
 
 }
+
+void Robot::responseOdometry() {
+  Console.print("$RS|");
+  Console.print(ROSlastMessageID);
+  Console.print('|');
+  Console.print(ROS_SEN_ODOM);
+  Console.print('|');
+  Console.print(odometryLeft);
+  Console.print('|');
+  Console.println(odometryRight);
+}
+
+void Robot::responseBumper() {
+  Console.print("$RS|");
+  Console.print(ROSlastMessageID);
+  Console.print('|');
+  Console.print(ROS_SEN_BUMPER);
+  Console.print('|');
+  Console.print(bumperLeftCounter);
+  Console.print('|');
+  Console.print(bumperRightCounter);
+  Console.print('|');
+  Console.print(bumperLeft);
+  Console.print('|');
+  Console.println(bumperRight);
+}
+
+void Robot::responseSonar() {
+  Console.print("$RS|");
+  Console.print(ROSlastMessageID);
+  Console.print('|');
+  Console.print(ROS_SEN_SONAR);
+  Console.print('|');
+  Console.print(sonarDistLeft);
+  Console.print('|');
+  Console.print(sonarDistCenter);
+  Console.print('|');
+  Console.print(sonarDistRight);
+  Console.print('|');
+  Console.println(sonarDistCounter);
+}
+
 void Robot::spinOnce() {
 
 }

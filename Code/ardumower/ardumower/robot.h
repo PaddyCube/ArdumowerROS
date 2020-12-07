@@ -197,7 +197,6 @@ public:
   int robotIsStuckCounter;
   // -------- odometry state --------------------------
   char twoWayOdometrySensorUse;   // use optional two-wire odometry sensor?
-  int odometryTicksPerRevolution; // encoder ticks per one full resolution
   bool odometryRightSwapDir; // inverse right encoder direction?
   bool odometryLeftSwapDir;  // inverse left encoder direction?
   int odometryLeft;          // left wheel counter
@@ -533,6 +532,12 @@ protected:
   virtual void processROSCommand(String command);
   virtual void responseHeartBeat();
   virtual void responseStatus();
+  virtual void responsePerimeter();
+  virtual void responseMotor();
+  virtual void responseOdometry();
+  virtual void responseBattery();
+  virtual void responseBumper();
+  virtual void responseSonar();
 
   // check sensor
   virtual void checkButton();
