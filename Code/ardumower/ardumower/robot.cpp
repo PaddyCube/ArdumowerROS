@@ -40,7 +40,7 @@
 #define ADDR_ERR_COUNTERS 400
 #define ADDR_ROBOT_STATS 800
 
-const char *stateNames[] = {"OFF ", "ROS", "ERR ", "STAT", "CHARG"};
+const char *stateNames[] = {"OFF ", "ROS", "REMOTE", "ERR ", "CHARG", "STAT"};
 
 const char *sensorNames[] = {"SEN_STATUS", "SEN_PERIM_LEFT", "SEN_PERIM_RIGHT", "SEN_LAWN_FRONT", "SEN_LAWN_BACK",
                              "SEN_BAT_VOLTAGE", "SEN_CHG_CURRENT", "SEN_CHG_VOLTAGE", "SEN_MOTOR_LEFT", "SEN_MOTOR_RIGHT", "SEN_MOTOR_MOW", "SEN_BUMPER_LEFT", "SEN_BUMPER_RIGHT",
@@ -81,9 +81,8 @@ Robot::Robot()
   stateLast = stateCurr = stateNext = STATE_OFF;
   stateTime = 0;
   idleTimeSec = 0;
-  rosTimeout = 0;
   ROSlastMessageID = 0;
-  
+
   statsMowTimeTotalStart = false;
 
   odometryLeft = odometryRight = 0;
@@ -213,7 +212,6 @@ Robot::Robot()
   nextTimeRobotStats = 0;
   statsMowTimeMinutesTripCounter = 0;
   statsBatteryChargingCounter = 0;
-
 }
 
 void Robot::setSensorTriggered(char type)
@@ -222,7 +220,8 @@ void Robot::setSensorTriggered(char type)
   lastSensorTriggeredTime = millis();
 
   // ROS event raise here
-  // Console.println( sensorNames[lastSensorTriggered] );
+  raiseROSSensorEvent(type);
+
 }
 
 const char *Robot::lastSensorTriggeredName()
@@ -315,27 +314,29 @@ void Robot::setup()
   // Console.print(F("  Arduino Due"));
   sendROSDebugInfo(ROS_DEBUG, "Arduino Due");
 #endif
-    Console.print(F("  IOREF="));
-    Console.println(IOREF);
+  Console.print(F("  IOREF="));
+  Console.println(IOREF);
 
-    Console.print(F("Robot: "));
-    Console.println(name);
+  Console.print(F("Robot: "));
+  Console.println(name);
 
-    Console.println(F("press..."));
-    Console.println(F("  d main menu"));
-    Console.println(F("  l simulate left bumper"));
-    Console.println(F("  r simulate right bumper"));
-    Console.println();
-    Console.println(F("-------------------------------------------"));
+  Console.println(F("press..."));
+  Console.println(F("  d main menu"));
+  Console.println(F("  l simulate left bumper"));
+  Console.println(F("  r simulate right bumper"));
+  Console.println();
+  Console.println(F("-------------------------------------------"));
 
-    // ROS read serial console here before starting ROS nodes
+  // ROS read serial console here before starting ROS nodes
 
-    delay(2000);
-       readSerial();
-    // rc.readSerial();
-    //resetIdleTime();
-    Console.println("Init ROSSerial");
-
+  delay(5000);
+  readSerial();
+  //rc.readSerial();
+  //resetIdleTime();
+  
+  Console.println("Init ROSSerial");
+  raiseROSNewStateEvent(stateCurr); // ready for communication
+  ROSLastTimeMessage = millis();
 }
 
 void Robot::checkButton()
@@ -355,7 +356,7 @@ void Robot::checkButton()
       // ON/OFF button pressed
       beep(1);
       buttonCounter++;
-      setSensorTriggered(SEN_BUTTON);
+      // setSensorTriggered(SEN_BUTTON);
       // if (!rmcsUse)
       //{
       resetIdleTime();
@@ -363,47 +364,10 @@ void Robot::checkButton()
     }
     else
     {
-      // ON/OFF button released
-      if (((stateCurr != STATE_OFF) || (stateCurr == STATE_ERROR)))
-      {
-        setNextState(STATE_OFF, 0);
-      }
-      else if (buttonCounter == 2)
-      {
-
-      }
-      else if (buttonCounter == 3)
-      {
-        // start remote control mode
-        setNextState(STATE_REMOTE, 0);
-      }
-      else if (buttonCounter == 4)
-      {
-
-      }
-      else if (buttonCounter == 7)
-      {
-
-      }
-      else if (buttonCounter == 6)
-      {
-
-      }
-      else if (buttonCounter == 5)
-      {
-
-      }
-      else if (buttonCounter == 1)
-      {
-        /*if ((perimeterUse) && (!perimeter.isInside())){
-          Console.println("start inside perimeter!");
-          addErrorCounter(ERR_PERIMETER_TIMEOUT);
-          setNextState(STATE_ERROR, 0);
-          } else {*/
-      }
+      setSensorTriggered(SEN_BUTTON);
     }
 
-    buttonCounter = 0;
+    //  buttonCounter = 0;
   }
 }
 
@@ -451,8 +415,9 @@ void Robot::readSensors()
       if (!ADCMan.calibrationDataAvail())
       {
         //Console.println(F("Error: missing ADC calibration data"));
-        //addErrorCounter(ERR_ADC_CALIB);
-        //setNextState(STATE_ERROR, 0);
+        addErrorCounter(ERR_ADC_CALIB);
+        setNextState(STATE_ERROR);
+        sendROSDebugInfo(ROS_FATAL, "missing ADC calibration data");
       }
     }
   }
@@ -512,8 +477,9 @@ void Robot::readSensors()
 
       //   Console.println("Error: perimeter too far away");
       // ROS raise event perimeter error
+      sendROSDebugInfo(ROS_FATAL, "perimeter too far away");
       addErrorCounter(ERR_PERIMETER_TIMEOUT);
-      setNextState(STATE_ERROR, 0);
+      setNextState(STATE_ERROR);
 
     }
   }
@@ -591,12 +557,18 @@ void Robot::readSensors()
       setSensorTriggered(SEN_BUMPER_LEFT);
       bumperLeft = true;
     }
+    else {
+      bumperLeft = false; // Bumper released
+    }
 
     if (readSensor(SEN_BUMPER_RIGHT) == 0)
     {
       bumperRightCounter++;
       setSensorTriggered(SEN_BUMPER_RIGHT);
       bumperRight = true;
+    }
+    else {
+      bumperRight = false;
     }
   }
 
@@ -609,12 +581,18 @@ void Robot::readSensors()
       setSensorTriggered(SEN_DROP_LEFT);
       dropLeft = true; // Dropsensor - Absturzsensor
     }                  // Dropsensor - Absturzsensor
+    else {
+      dropLeft = false;
+    }
 
     if (readSensor(SEN_DROP_RIGHT) == dropcontact)
     { // Dropsensor - Absturzsensor
       dropRightCounter++; // Dropsensor - Absturzsensor
       setSensorTriggered(SEN_DROP_RIGHT);
       dropRight = true; // Dropsensor - Absturzsensor
+    }
+    else {
+      dropRight = false;
     }
   }
 
@@ -632,6 +610,7 @@ void Robot::readSensors()
     if (imu.getErrorCounter() > 0)
     {
       addErrorCounter(ERR_IMU_COMM);
+      sendROSDebugInfo(ROS_FATAL, "IMU comm error");
       // ROS raise event IMU error
       //Console.println(F("IMU comm error"));
     }
@@ -639,8 +618,9 @@ void Robot::readSensors()
     {
       // ROS raise event IMU error
       // Console.println(F("Error: missing IMU calibration data"));
+      sendROSDebugInfo(ROS_FATAL, "missing IMU calibration data");
       addErrorCounter(ERR_IMU_CALIB);
-      setNextState(STATE_ERROR, 0);
+      setNextState(STATE_ERROR);
     }
   }
 
@@ -811,8 +791,6 @@ void Robot::checkCurrent()
     // Console.println("Error: Motor mow current");
     addErrorCounter(ERR_MOW_SENSE);
     lastTimeMotorMowStuck = millis();
-    // if (rollDir == RIGHT) reverseOrBidir(LEFT); // toggle roll dir
-    //else reverseOrBidir(RIGHT);
   }
 
   if (motorLeftSense >= motorPowerMax)
@@ -825,8 +803,6 @@ void Robot::checkCurrent()
       motorLeftSenseCounter++;
       setSensorTriggered(SEN_MOTOR_LEFT);
       setMotorPWM(0, 0, false);
-      // Raise event to ROS
-      //reverseOrBidir(RIGHT);
     }
 
   }
@@ -840,86 +816,84 @@ void Robot::checkCurrent()
       motorRightSenseCounter++;
       setSensorTriggered(SEN_MOTOR_RIGHT);
       setMotorPWM(0, 0, false);
-      // ROS raise event
-      //  reverseOrBidir(RIGHT);
     }
   }
 }
+//
+//// check bumpers
+//void Robot::checkBumpers()
+//{
+//  if (!bumperUse)
+//    return;
+//
+//  if ((bumperLeft || bumperRight))
+//  {
+//    // ROS raise
+//  }
+//}
+//
+//// check free wheel
+//void Robot::checkFreeWheel()
+//{
+//  if (!freeWheelUse)
+//    return;
+//
+//  if (!freeWheelIsMoving)
+//  {
+//
+//    // ROS raise event
+//  }
+//}
+//
+//// check drop                                                                                                                       // Dropsensor - Absturzsensor
+//void Robot::checkDrop()
+//{ // Dropsensor - Absturzsensor
+//  if (!dropUse)
+//    return;
+//
+//  if ((dropLeft || dropRight))
+//  { // Dropsensor - Absturzsensor
+//
+//    // ROS raise event                                                                                                                      // Dropsensor - Absturzsensor
+//  } // Dropsensor - Absturzsensor
+//} // Dropsensor - Absturzsensor
 
-// check bumpers
-void Robot::checkBumpers()
-{
-  if (!bumperUse)
-    return;
+//
+//// check perimeter as a boundary
+//void Robot::checkPerimeterBoundary()
+//{
+//  if (!perimeterUse)
+//    return;
+//  if (!perimeterLeftInside || !perimeterRightInside)
+//  {
+//    // ROS raise event
+//
+//  }
+//}
 
-  if ((bumperLeft || bumperRight))
-  {
-    // ROS raise
-  }
-}
-
-// check free wheel
-void Robot::checkFreeWheel()
-{
-  if (!freeWheelUse)
-    return;
-
-  if (!freeWheelIsMoving)
-  {
-
-    // ROS raise event
-  }
-}
-
-// check drop                                                                                                                       // Dropsensor - Absturzsensor
-void Robot::checkDrop()
-{ // Dropsensor - Absturzsensor
-  if (!dropUse)
-    return;
-
-  if ((dropLeft || dropRight))
-  { // Dropsensor - Absturzsensor
-
-    // ROS raise event                                                                                                                      // Dropsensor - Absturzsensor
-  } // Dropsensor - Absturzsensor
-} // Dropsensor - Absturzsensor
-
-
-// check perimeter as a boundary
-void Robot::checkPerimeterBoundary()
-{
-  if (!perimeterUse)
-    return;
-  if (!perimeterLeftInside || !perimeterRightInside)
-  {
-    // ROS raise event
-
-  }
-}
-
-// check lawn
-void Robot::checkLawn()
-{
-  if (!lawnSensorUse)
-    return;
-  if ((lawnSensor))
-  {
-    // ROS raise event
-  }
-  else
-    lawnSensor = false;
-}
-
-void Robot::checkRain()
-{
-  if (!rainUse)
-    return;
-  if (rain)
-  {
-    // ROS raise event
-
-  }
-}
+//// check lawn
+//void Robot::checkLawn()
+//{
+//  if (!lawnSensorUse)
+//    return;
+//  if ((lawnSensor))
+//  {
+//    // ROS raise event
+//  }
+//  else
+//    lawnSensor = false;
+//}
+//
+//void Robot::checkRain()
+//{
+//  if (!rainUse)
+//    return;
+//  if (rain)
+//  {
+//    // ROS raise event
+//
+//  }
+//}
 
 // check sonar
 void Robot::checkSonar()
@@ -971,22 +945,16 @@ void Robot::checkSonar()
     {
       sonarDistCounter++;
       setSensorTriggered(SEN_SONAR_CENTER);
-
-      // ROS raise event sonar trigger
     }
     if ((sonarDistRight != NO_ECHO) && (sonarDistRight < sonarTriggerBelow))
     {
       sonarDistCounter++;
       setSensorTriggered(SEN_SONAR_RIGHT);
-      // reverseOrBidir(LEFT);
-      // ROS raise event sonar trigger
     }
     if ((sonarDistLeft != NO_ECHO) && (sonarDistLeft < sonarTriggerBelow))
     {
       sonarDistCounter++;
       setSensorTriggered(SEN_SONAR_LEFT);
-      // reverseOrBidir(RIGHT);
-      // ROS raise event sonar trigger
     }
   }
 }
@@ -1019,8 +987,7 @@ void Robot::checkTilt()
     //  Console.println(F("Error: IMU tilt"));
     addErrorCounter(ERR_IMU_TILT);
     setSensorTriggered(SEN_TILT);
-    //setNextState(STATE_ERROR, 0);
-    // ROS raise error IMU tilt
+    setNextState(STATE_ERROR);
   }
   //  }
 
@@ -1059,7 +1026,43 @@ const char *Robot::stateName()
   return stateNames[stateCurr];
 }
 
-void Robot::setNextState(byte stateNew, byte dir) {
+void Robot::setNextState(byte stateNew) {
+
+  if (stateCurr == STATE_STATION_CHARGING) {
+    // always switch off charging relay if leaving state STATE_STATION_CHARGING
+    setActuator(ACT_CHGRELAY, 0);
+  }
+
+  if (stateNew == STATE_STATION) {
+    setMotorPWM(0, 0, false);
+    setActuator(ACT_CHGRELAY, 0);
+    setDefaults();
+    statsMowTimeTotalStart = false;  // stop stats mowTime counter
+    loadSaveRobotStats(false);        //save robot stats
+
+  }
+  if (stateNew == STATE_STATION_CHARGING) {
+    setActuator(ACT_CHGRELAY, 1);
+    setDefaults();
+  }
+  if (stateNew == STATE_OFF) {
+    setActuator(ACT_CHGRELAY, 0);
+    setDefaults();
+    statsMowTimeTotalStart = false; // stop stats mowTime counter
+    loadSaveRobotStats(false);      //save robot stats
+  }
+  if (stateNew == STATE_ERROR) {
+    motorMowEnable = false;
+    motorLeftSpeedRpmSet = motorRightSpeedRpmSet = 0;
+    setActuator(ACT_CHGRELAY, 0);
+    statsMowTimeTotalStart = false;
+    //loadSaveRobotStats(false);
+  }
+  // Inform ROS about new state
+  raiseROSNewStateEvent(stateNew);
+  stateCurr = stateNew;
+  stateStartTime = millis();
+  stateLast = stateCurr;
 
 }
 
@@ -1072,29 +1075,27 @@ void Robot::loop()
   ADCMan.run();
 
   // ROS no read of serial console in loop, only setup
-  /*   if (stateCurr != STATE_ROS) */
-
   readROSSerial();
   rc.readSerial();
   //resetIdleTime();
 
   readSensors();
   checkBattery();
-  //  checkRobotStats();
+  checkRobotStats();
   //  calcOdometry();
- //   checkOdometryFaults();
-    checkButton();
-  //  motorMowControl();
-  //  checkTilt();
+  //   checkOdometryFaults();
+  checkButton();
+  // motorMowControl();
+  checkTilt();
 
-  //  if (imuUse)
-  //    imu.update();
+  if (imuUse)
+    imu.update();
 
-//    if (gpsUse)
-//    {
-//      gps.feed();
-//      processGPSData();
-//    }
+  if (gpsUse)
+  {
+    gps.feed();
+    processGPSData();
+  }
 
   if (millis() >= nextTimePfodLoop)
   {
@@ -1108,8 +1109,8 @@ void Robot::loop()
 
     // ROS send info for debugging
     ledState = ~ledState;
-    sendROSDebugInfo(ROS_DEBUG, "alive");
     //checkErrorCounter();
+    sendROSDebugInfo(ROS_DEBUG, "alive");
 
     if (stateCurr == STATE_REMOTE) {
       //   printRemote();
@@ -1131,7 +1132,7 @@ void Robot::loop()
         // Console.println(F("Error: loopsPerSec too low (check I2C cables)"));
         // ROS raise event Arduino too slow
         addErrorCounter(ERR_CPU_SPEED);
-        setNextState(STATE_ERROR, 0); //mower is switched into ERROR
+        setNextState(STATE_ERROR); //mower is switched into ERROR
       }
     }
     else
@@ -1142,6 +1143,14 @@ void Robot::loop()
   }
 
   // Process ROS commands here
+
+  // check if ROS timeout occured
+  if ( (millis() - ROSLastTimeMessage > ROSTimeout ) && stateCurr != STATE_ERROR )
+  {
+    Console.println("ROS Timeout");
+    addErrorCounter(ERR_ROS);
+    setNextState(STATE_ERROR);
+  }
 
   // state machine - things to do *PERMANENTLY* for current state
   // robot state machine
@@ -1164,12 +1173,36 @@ void Robot::loop()
         if (chgVoltage > 5.0)
         {
           beep(2, true);
+          setNextState(STATE_STATION);
 
         }
       }
       imuDriveHeading = imu.ypr.yaw;
       break;
 
+    case STATE_STATION:
+      // waiting until auto-start by user or timer triggered
+      if (batMonitor) {
+        if (chgVoltage > 5.0) {
+          if (batVoltage < startChargingIfBelow && (millis() - stateStartTime > 2000)) {
+            setNextState(STATE_STATION_CHARGING);
+          }
+        } else setNextState(STATE_OFF);
+      }
+      break;
+
+    case STATE_STATION_CHARGING:
+      // waiting until charging completed
+      if (batMonitor) {
+        if ((chgCurrent < batFullCurrent) && (millis() - stateStartTime > 2000)) setNextState(STATE_STATION);
+        else if (millis() - stateStartTime > chargingTimeout) {
+          Console.println(F("Battery chargingTimeout"));
+          addErrorCounter(ERR_BATTERY);
+          setNextState(STATE_ERROR);
+        }
+        if (chgVoltage < 5 && (millis() - stateStartTime > 2000)) setNextState(STATE_OFF);
+      }
+      break;
       //  case STATE_REMOTE:
       //    // remote control mode (RC)
       //    //if (remoteSwitch > 50) setNextState(STATE_FORWARD, 0);
@@ -1192,22 +1225,15 @@ void Robot::loop()
   // decide which motor control to use
   // ROS redefine needed
 
-  motorControl();
+ // motorControl();
+//if (stateCurr != STATE_REMOTE)
+ //   motorMowSpeedPWMSet = motorMowSpeedMaxPwm;
 
-  if (stateCurr != STATE_REMOTE)
-    motorMowSpeedPWMSet = motorMowSpeedMaxPwm;
-
-  bumperRight = false;
-  bumperLeft = false;
-
-  dropRight = false; // Dropsensor - Absturzsensor
-  dropLeft = false;  // Dropsensor - Absturzsensor
+  //  bumperRight = false;
+  //  bumperLeft = false;
+  //
+  //  dropRight = false; // Dropsensor - Absturzsensor
+  //  dropLeft = false;  // Dropsensor - Absturzsensor
 
   loopsPerSecCounter++;
-
-  // ROS send status message
- //sendROSStatusMessage();
-  // sendROSStatusMessage(Console);
-  // spin once
-//  spinOnce();
 }

@@ -500,6 +500,7 @@ void Robot::addErrorCounter(byte errType){
   // increase error counters (both temporary and maximum error counters)
   if (errorCounter[errType] < 255) errorCounter[errType]++;
   if (errorCounterMax[errType] < 255) errorCounterMax[errType]++;
+  raiseROSErrorEvent(errType);
 }
 
 void Robot::resetErrorCounters(){
@@ -549,7 +550,7 @@ void Robot::checkErrorCounter(){
    for (int i=0; i < ERR_ENUM_COUNT; i++){
      // set to fatal error if any temporary error counter reaches 10
      if (errorCounter[i] > 10) {       
-       setNextState(STATE_ERROR, 0);
+       setNextState(STATE_ERROR);
      }
     }
   }  
@@ -573,24 +574,24 @@ void Robot::checkRobotStats(){
 
     }
 
-////---------------stats Battery---------------------------------------------------------
-//  if ((stateCurr == STATE_STATION_CHARGING) && (stateTime >= 60000)){ // count only if mower is charged longer then 60sec
-//    statsBatteryChargingCounter++; // temporary counter
-//    if (statsBatteryChargingCounter == 1) statsBatteryChargingCounterTotal +=1; 
-//    statsBatteryChargingCapacityTrip = batCapacity;
-//    statsBatteryChargingCapacityTotal += (batCapacity - lastTimeBatCapacity); // summ up only the difference between actual batCapacity and last batCapacity
-//    lastTimeBatCapacity = batCapacity;
-//  }
-//  else{                         // resets values to 0 when mower is not charging
-//    statsBatteryChargingCounter = 0; 
-//    batCapacity = 0;
-//  }
-//
-//  if(isnan(statsBatteryChargingCapacityTrip)) statsBatteryChargingCapacityTrip = 0;
-//  if(isnan(statsBatteryChargingCounterTotal)) statsBatteryChargingCounterTotal = 0; // for first run ensures that the counter is 0
-//  if(isnan(statsBatteryChargingCapacityTotal)) statsBatteryChargingCapacityTotal = 0; // for first run ensures that the counter is 0
-//  if(statsBatteryChargingCapacityTotal <= 0 || statsBatteryChargingCounterTotal == 0) statsBatteryChargingCapacityAverage = 0; // make sure that there is no dividing by zero
-//    else statsBatteryChargingCapacityAverage = statsBatteryChargingCapacityTotal / statsBatteryChargingCounterTotal;
+//---------------stats Battery---------------------------------------------------------
+  if ((stateCurr == STATE_STATION_CHARGING) && (stateTime >= 60000)){ // count only if mower is charged longer then 60sec
+    statsBatteryChargingCounter++; // temporary counter
+    if (statsBatteryChargingCounter == 1) statsBatteryChargingCounterTotal +=1; 
+    statsBatteryChargingCapacityTrip = batCapacity;
+    statsBatteryChargingCapacityTotal += (batCapacity - lastTimeBatCapacity); // summ up only the difference between actual batCapacity and last batCapacity
+    lastTimeBatCapacity = batCapacity;
+  }
+  else{                         // resets values to 0 when mower is not charging
+    statsBatteryChargingCounter = 0; 
+    batCapacity = 0;
+  }
+
+  if(isnan(statsBatteryChargingCapacityTrip)) statsBatteryChargingCapacityTrip = 0;
+  if(isnan(statsBatteryChargingCounterTotal)) statsBatteryChargingCounterTotal = 0; // for first run ensures that the counter is 0
+  if(isnan(statsBatteryChargingCapacityTotal)) statsBatteryChargingCapacityTotal = 0; // for first run ensures that the counter is 0
+  if(statsBatteryChargingCapacityTotal <= 0 || statsBatteryChargingCounterTotal == 0) statsBatteryChargingCapacityAverage = 0; // make sure that there is no dividing by zero
+    else statsBatteryChargingCapacityAverage = statsBatteryChargingCapacityTotal / statsBatteryChargingCounterTotal;
 
 
 //----------------new stats goes here------------------------------------------------------

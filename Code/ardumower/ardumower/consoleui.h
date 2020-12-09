@@ -335,7 +335,7 @@ void Robot::menu() {
           break;
         case 'e':
           resetErrorCounters();
-          setNextState(STATE_OFF, 0);
+          setNextState(STATE_OFF);
           Console.println(F("ALL ERRORS ARE DELETED"));
           printMenu();
           break;

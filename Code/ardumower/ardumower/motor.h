@@ -10,36 +10,36 @@ void Robot::setMotorMowRPMState(boolean motorMowRpmState){
 }
 
 
-
-// calculate map position by odometry sensors
-void Robot::calcOdometry(){
-  if ( (millis() < nextTimeOdometry)) return;    
-  nextTimeOdometry = millis() + 100;
-
-  static int lastOdoLeft = 0;
-  static int lastOdoRight = 0;
-  int odoLeft = odometryLeft;
-  int odoRight = odometryRight;
-  int ticksLeft = odoLeft - lastOdoLeft;
-  int ticksRight = odoRight - lastOdoRight;
-  lastOdoLeft = odoLeft;
-  lastOdoRight = odoRight;    
-  //double left_cm = ((double)ticksLeft) / ((double)odometryTicksPerCm);
-  //double right_cm = ((double)ticksRight) / ((double)odometryTicksPerCm);  
-  //double avg_cm  = (left_cm + right_cm) / 2.0;
-  //double wheel_theta = (left_cm - right_cm) / ((double)odometryWheelBaseCm);    
-  //odometryTheta = scalePI(odometryTheta - wheel_theta); 
-  
-	// calculate RPM 
- // motorLeftRpmCurr  = double ((( ((double)ticksLeft) / ((double)odometryTicksPerRevolution)) / ((double)(millis() - lastMotorRpmTime))) * 60000.0);
- // motorRightRpmCurr = double ((( ((double)ticksRight) / ((double)odometryTicksPerRevolution)) / ((double)(millis() - lastMotorRpmTime))) * 60000.0);
-  lastMotorRpmTime = millis();
-  
-  // ROS coordinate system (X+ forward, Y+ left, Z+ up)  
-  // FIXME: theta should be old theta, not new theta?
-  //odometryY += avg_cm * sin(odometryTheta); 
-  //odometryX += avg_cm * cos(odometryTheta); 
-} 
+//
+//// calculate map position by odometry sensors
+//void Robot::calcOdometry(){
+//  if ( (millis() < nextTimeOdometry)) return;    
+//  nextTimeOdometry = millis() + 100;
+//
+//  static int lastOdoLeft = 0;
+//  static int lastOdoRight = 0;
+//  int odoLeft = odometryLeft;
+//  int odoRight = odometryRight;
+//  int ticksLeft = odoLeft - lastOdoLeft;
+//  int ticksRight = odoRight - lastOdoRight;
+//  lastOdoLeft = odoLeft;
+//  lastOdoRight = odoRight;    
+//  //double left_cm = ((double)ticksLeft) / ((double)odometryTicksPerCm);
+//  //double right_cm = ((double)ticksRight) / ((double)odometryTicksPerCm);  
+//  //double avg_cm  = (left_cm + right_cm) / 2.0;
+//  //double wheel_theta = (left_cm - right_cm) / ((double)odometryWheelBaseCm);    
+//  //odometryTheta = scalePI(odometryTheta - wheel_theta); 
+//  
+//	// calculate RPM 
+// // motorLeftRpmCurr  = double ((( ((double)ticksLeft) / ((double)odometryTicksPerRevolution)) / ((double)(millis() - lastMotorRpmTime))) * 60000.0);
+// // motorRightRpmCurr = double ((( ((double)ticksRight) / ((double)odometryTicksPerRevolution)) / ((double)(millis() - lastMotorRpmTime))) * 60000.0);
+//  lastMotorRpmTime = millis();
+//  
+//  // ROS coordinate system (X+ forward, Y+ left, Z+ up)  
+//  // FIXME: theta should be old theta, not new theta?
+//  //odometryY += avg_cm * sin(odometryTheta); 
+//  //odometryX += avg_cm * cos(odometryTheta); 
+//} 
 
 
 // sets wheel motor actuators
@@ -300,7 +300,7 @@ void Robot::checkOdometryFaults(){
     Console.print("\tRPM=");
     Console.println(motorLeftRpmCurr);
     addErrorCounter(ERR_ODOMETRY_LEFT);
-    setNextState(STATE_ERROR, 0);
+    setNextState(STATE_ERROR);
   }
   if (rightErr){
     Console.print("Right odometry error: PWM=");
@@ -308,7 +308,7 @@ void Robot::checkOdometryFaults(){
     Console.print("\tRPM=");
     Console.println(motorRightRpmCurr);
     addErrorCounter(ERR_ODOMETRY_RIGHT);
-    setNextState(STATE_ERROR, 0);
+    setNextState(STATE_ERROR);
   }
 }
 

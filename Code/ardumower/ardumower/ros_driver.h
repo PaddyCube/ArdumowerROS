@@ -38,6 +38,13 @@ enum {
   HEARTBEAT, REQUEST, RESPONSE, MOTORREQUEST, MOTORRESPONSE, EVENT
 };
 
+// ROS Events
+enum {
+  ROS_EV_NEW_STATE,
+  ROS_EV_SENSOR_TRIGGER,
+  ROS_EV_ERROR
+};
+
 // ROS sensor requests
 enum {
   ROS_SEN_STATUS,
@@ -50,7 +57,8 @@ enum {
   ROS_SEN_SONAR,
   ROS_SEN_IMU,
   ROS_SEN_RAIN,
-  ROS_SEN_FREE_WHEEL
+  ROS_SEN_FREE_WHEEL,
+  ROS_SEN_BUTTON
 };
 void Robot::initROSSerial() {
   Console.begin(CONSOLE_BAUDRATE);
@@ -83,12 +91,37 @@ void Robot::sendROSDebugInfo(int type, char *message) {
   }
 }
 
+void Robot::raiseROSNewStateEvent(byte stateNew) {
+  Console.print(ROSCommandSet[EVENT]);
+  Console.print('|');
+  Console.print(ROS_EV_NEW_STATE);
+  Console.print('|');
+  Console.println(stateNew);
+}
+
+void Robot::raiseROSSensorEvent(int sensorType) {
+  Console.print(ROSCommandSet[EVENT]);
+  Console.print('|');
+  Console.print(ROS_EV_SENSOR_TRIGGER);
+  Console.print('|');
+  Console.println(sensorType);
+}
+
+void Robot::raiseROSErrorEvent(byte errorType) {
+  Console.print(ROSCommandSet[EVENT]);
+  Console.print('|');
+  Console.print(ROS_EV_ERROR);
+  Console.print('|');
+  Console.println(errorType);
+}
+
 void Robot::readROSSerial() {
   String serialdata;
 
   if (Console.available() > 0) {
     serialdata = waitStringConsole();
     if (serialdata[0] == '$') {
+      ROSLastTimeMessage = millis();
       processROSCommand(serialdata);
     }
   }
@@ -134,7 +167,7 @@ void Robot::processROSCommand(String command) {
 
   // compare this message ID with the previous once
   if (ROSlastMessageID + 1 != thisMessageID) {
-    addErrorCounter (ERR_ROS);
+    addErrorCounter(ERR_ROS);
     sendROSDebugInfo(ROS_WARN, "missing Messages");
   }
 
@@ -172,11 +205,17 @@ void Robot::processROSCommand(String command) {
             case ROS_SEN_SONAR:
               responseSonar();
               break;
+            case ROS_SEN_BUTTON:
+              responseButton();
+              break;
             default:
               sendROSDebugInfo(ROS_ERROR, "invalid sensor requested");
               break;
           }
-
+          break;
+        case MOTORREQUEST:
+          processMotorCommand(commandParts[1], commandParts[2], commandParts[3]);
+          break;
       }
 
     }
@@ -186,12 +225,14 @@ void Robot::processROSCommand(String command) {
 
 void Robot::responseHeartBeat() {
   // prepare message
-  Console.print("$HB|");
+  Console.print(ROSCommandSet[HEARTBEAT]);
+  Console.print('|');
   Console.println(ROSlastMessageID);
 }
 
 void Robot::responseStatus() {
-  Console.print("$RS|");
+  Console.print(ROSCommandSet[RESPONSE]);
+  Console.print('|');
   Console.print(ROSlastMessageID);
   Console.print('|');
   Console.print(ROS_SEN_STATUS);
@@ -205,7 +246,8 @@ void Robot::responseStatus() {
 }
 
 void Robot::responseBattery() {
-  Console.print("$RS|");
+  Console.print(ROSCommandSet[RESPONSE]);
+  Console.print('|');
   Console.print(ROSlastMessageID);
   Console.print('|');
   Console.print(ROS_SEN_BAT);
@@ -218,7 +260,8 @@ void Robot::responseBattery() {
 }
 
 void Robot::responsePerimeter() {
-  Console.print("$RS|");
+  Console.print(ROSCommandSet[RESPONSE]);
+  Console.print('|');
   Console.print(ROSlastMessageID);
   Console.print('|');
   Console.print(ROS_SEN_PERIM);
@@ -233,11 +276,14 @@ void Robot::responsePerimeter() {
   Console.print('|');
   Console.print(perimeterLastTransitionTime);
   Console.print('|');
-  Console.println(perimeterTriggerTimeout);
+  Console.print(perimeter.signalTimedOut(0));
+  Console.print('|');
+  Console.println(perimeter.signalTimedOut(1));
 }
 
 void Robot::responseMotor() {
-  Console.print("$RS|");
+  Console.print(ROSCommandSet[RESPONSE]);
+  Console.print('|');
   Console.print(ROSlastMessageID);
   Console.print('|');
   Console.print(ROS_SEN_MOTOR);
@@ -269,7 +315,8 @@ void Robot::responseMotor() {
 }
 
 void Robot::responseOdometry() {
-  Console.print("$RS|");
+  Console.print(ROSCommandSet[RESPONSE]);
+  Console.print('|');
   Console.print(ROSlastMessageID);
   Console.print('|');
   Console.print(ROS_SEN_ODOM);
@@ -280,7 +327,8 @@ void Robot::responseOdometry() {
 }
 
 void Robot::responseBumper() {
-  Console.print("$RS|");
+  Console.print(ROSCommandSet[RESPONSE]);
+  Console.print('|');
   Console.print(ROSlastMessageID);
   Console.print('|');
   Console.print(ROS_SEN_BUMPER);
@@ -295,7 +343,8 @@ void Robot::responseBumper() {
 }
 
 void Robot::responseSonar() {
-  Console.print("$RS|");
+  Console.print(ROSCommandSet[RESPONSE]);
+  Console.print('|');
   Console.print(ROSlastMessageID);
   Console.print('|');
   Console.print(ROS_SEN_SONAR);
@@ -307,6 +356,67 @@ void Robot::responseSonar() {
   Console.print(sonarDistRight);
   Console.print('|');
   Console.println(sonarDistCounter);
+}
+
+void Robot::responseButton() {
+  Console.print(ROSCommandSet[RESPONSE]);
+  Console.print('|');
+  Console.print(ROSlastMessageID);
+  Console.print('|');
+  Console.println(buttonCounter);
+  buttonCounter = 0;
+}
+
+void Robot::responseMotorCommand() {
+  Console.print(ROSCommandSet[MOTORRESPONSE]);
+  Console.print('|');
+  Console.print(ROSlastMessageID);
+  Console.print('|');
+  Console.print(motorLeftPWMCurr);
+  Console.print('|');
+  Console.print(motorRightPWMCurr);
+  Console.print('|');
+  Console.println(motorMowEnable);
+}
+
+void Robot::processMotorCommand(String pwmLeftStr, String pwmRightStr, String mowStr)
+{
+
+  int pwmLeft = pwmLeftStr.toInt();
+  int pwmRight = pwmRightStr.toInt();
+  int mow = mowStr.toInt();
+  Console.println(pwmLeft);
+  // check for valid commands
+  if ( pwmLeft < -255 || pwmLeft > 255 )
+  {
+    pwmLeft = 0;
+    sendROSDebugInfo(ROS_ERROR, "invalid speed for left motor");
+  }
+  if ( pwmRight < -255 || pwmRight > 255)
+  {
+    pwmRight = 0;
+    sendROSDebugInfo(ROS_ERROR, "invalid speed for right motor");
+  }
+  if ( mow < 0 || mow > 1)
+  {
+    mow = 0;
+    sendROSDebugInfo(ROS_ERROR, "invalid value for mow motor");
+  }
+  // set motor speeds accordingly
+  setMotorPWM(pwmLeft, pwmRight, false);
+
+  switch (mow)
+  {
+    case 0:
+      motorMowEnable = false;
+      break;
+    case 1:
+      motorMowEnable = true;
+      break;
+  }
+
+  responseMotorCommand();
+
 }
 
 void Robot::spinOnce() {

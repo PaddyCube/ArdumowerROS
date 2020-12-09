@@ -132,7 +132,8 @@ enum
   STATE_ROS,     // Linux ROS control
   STATE_REMOTE,  // model remote control (R/C)
   STATE_ERROR,            // error
- 
+  STATE_STATION_CHARGING, // recharge in Station
+  STATE_STATION    // in station
 };
 
 
@@ -387,7 +388,8 @@ public:
   RemoteControl rc; // pfodApp
   unsigned long nextTimePfodLoop;
   // ----- ROS -------------------------------------------
-  unsigned long rosTimeout;
+  unsigned long ROSTimeout;
+  unsigned long ROSLastTimeMessage;
   unsigned long ROSlastMessageID;
   boolean ROSDebugVerbose;
   
@@ -479,7 +481,7 @@ public:
   virtual void setMotorMowRPMState(boolean motorMowRpmState);
 
   // state machine
-  virtual void setNextState(byte stateNew, byte dir);
+  virtual void setNextState(byte stateNew);
 
   // motor
   virtual void setMotorPWM(int pwmLeft, int pwmRight, boolean useAccel);
@@ -528,8 +530,13 @@ protected:
   virtual void initROSSerial();
   virtual void spinOnce();
   virtual void sendROSDebugInfo(int type, char *);
+  virtual void raiseROSNewStateEvent(byte stateNew);
+  virtual void raiseROSSensorEvent(int sensortype);
+  virtual void raiseROSErrorEvent(byte errorType);
   virtual void readROSSerial();
   virtual void processROSCommand(String command);
+  virtual void processMotorCommand(String pwmLeft, String pwmRight, String mow);
+  virtual void responseMotorCommand();
   virtual void responseHeartBeat();
   virtual void responseStatus();
   virtual void responsePerimeter();
@@ -538,20 +545,21 @@ protected:
   virtual void responseBattery();
   virtual void responseBumper();
   virtual void responseSonar();
+  virtual void responseButton();
 
   // check sensor
   virtual void checkButton();
   virtual void checkBattery();
   //virtual void checkTimer();
   virtual void checkCurrent();
-  virtual void checkBumpers();
-  virtual void checkFreeWheel();
-  virtual void checkDrop(); // Dropsensor - Absturzsensor
-  virtual void checkPerimeterBoundary();
-  virtual void checkLawn();
+  //virtual void checkBumpers();
+  //virtual void checkFreeWheel();
+  //virtual void checkDrop(); // Dropsensor - Absturzsensor
+  //virtual void checkPerimeterBoundary();
+  //virtual void checkLawn();
   virtual void checkSonar();
   virtual void checkTilt();
-  virtual void checkRain();
+ // virtual void checkRain();
   virtual void checkTimeout();
   virtual void checkOdometryFaults();
   virtual void checkRobotStats();
@@ -582,7 +590,7 @@ protected:
   virtual void testRTC();
   virtual void setDefaults();
   virtual void receiveGPSTime();
-  virtual void calcOdometry();
+  //virtual void calcOdometry();
   virtual void menu();
   virtual void commsMenuBT();
   virtual void commsMenuWifi();
