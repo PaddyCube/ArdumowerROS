@@ -381,39 +381,51 @@ void Robot::responseMotorCommand() {
 
 void Robot::processMotorCommand(String pwmLeftStr, String pwmRightStr, String mowStr)
 {
-
+  ROSLastTimeMotorCommand = millis();
   int pwmLeft = pwmLeftStr.toInt();
   int pwmRight = pwmRightStr.toInt();
   int mow = mowStr.toInt();
-  Console.println(pwmLeft);
+  bool invalidCommand = false;
+
   // check for valid commands
   if ( pwmLeft < -255 || pwmLeft > 255 )
   {
     pwmLeft = 0;
     sendROSDebugInfo(ROS_ERROR, "invalid speed for left motor");
+    invalidCommand = true;
   }
   if ( pwmRight < -255 || pwmRight > 255)
   {
     pwmRight = 0;
     sendROSDebugInfo(ROS_ERROR, "invalid speed for right motor");
+    invalidCommand = true;
   }
   if ( mow < 0 || mow > 1)
   {
     mow = 0;
     sendROSDebugInfo(ROS_ERROR, "invalid value for mow motor");
+    invalidCommand = true;
   }
   // set motor speeds accordingly
-  setMotorPWM(pwmLeft, pwmRight, false);
-
-  switch (mow)
+  if (!invalidCommand)
   {
-    case 0:
-      motorMowEnable = false;
-      break;
-    case 1:
-      motorMowEnable = true;
-      break;
+    setMotorPWM(pwmLeft, pwmRight, false);
+
+    switch (mow)
+    {
+      case 0:
+        motorMowEnable = false;
+        break;
+      case 1:
+        motorMowEnable = true;
+        break;
+    }
   }
+  else {
+    setMotorPWM(0, 0, false);
+    motorMowEnable = false;
+  }
+
 
   responseMotorCommand();
 

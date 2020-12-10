@@ -658,19 +658,22 @@ void RemoteControl::sendPerimeterMenu(boolean update)
     serialPort->print(F("{.Perimeter`1000"));
   serialPort->print(F("|e00~Use "));
   sendYesNo(robot->perimeterUse);
-  serialPort->println(F("|e02~Value "));
+  serialPort->println(F("|e02~Value left"));
   serialPort->print(robot->perimeterLeftMag);
-  serialPort->print(robot->perimeterRightMag);
   if (robot->perimeterLeftMag < 0)
     serialPort->print(" (left inside)");
   else
     serialPort->print(" (left outside)");
+  serialPort->println(F("|e32~Value right"));
+  serialPort->print(robot->perimeterRightMag);
   if (robot->perimeterRightMag < 0)
     serialPort->print(" (right inside)");
   else
     serialPort->print(" (right outside)");
-  serialPort->print(F("|e22~smag "));
+  serialPort->print(F("|e22~smag left "));
   serialPort->print(robot->perimeter.getSmoothMagnitude(0));
+  serialPort->print(F("|e32~smag right "));
+  serialPort->print(robot->perimeter.getSmoothMagnitude(1));  
   serialPort->print(F("|e23~timeout "));
   serialPort->print(robot->perimeter.signalTimedOut(0));
   sendSlider("e08", F("Timed-out if below smag"), robot->perimeter.timedOutIfBelowSmag, "", 1, 2000);
@@ -681,8 +684,10 @@ void RemoteControl::sendPerimeterMenu(boolean update)
   sendPIDSlider("e07", F("Track"), robot->perimeterPID, 0.1, 100);
   //serialPort->print(F("|e09~Use differential signal "));
   //sendYesNo(robot->perimeter.useDifferentialPerimeterSignal);
-  serialPort->print(F("|e10~Swap coil polarity "));
-  sendYesNo(robot->perimeter.swapCoilPolarity);
+  serialPort->print(F("|e10~Swap coil polarity left "));
+  sendYesNo(robot->perimeter.swapCoilPolarityLeft);
+  serialPort->print(F("|e15~Swap coil polarity right "));
+  sendYesNo(robot->perimeter.swapCoilPolarityRight);  
   serialPort->print(F("|e13~Block inner wheel  "));
   sendYesNo(robot->trackingBlockInnerWheelWhilePerimeterStruggling);
   serialPort->print(F("|e18~State "));
@@ -705,7 +710,9 @@ void RemoteControl::processPerimeterMenu(String pfodCmd)
     processSlider(pfodCmd, robot->perimeter.timedOutIfBelowSmag, 1);
   //else if (pfodCmd.startsWith("e09")) robot->perimeter.useDifferentialPerimeterSignal = !robot->perimeter.useDifferentialPerimeterSignal;
   else if (pfodCmd.startsWith("e10"))
-    robot->perimeter.swapCoilPolarity = !robot->perimeter.swapCoilPolarity;
+    robot->perimeter.swapCoilPolarityLeft = !robot->perimeter.swapCoilPolarityLeft;
+  else if (pfodCmd.startsWith("e15"))
+    robot->perimeter.swapCoilPolarityRight = !robot->perimeter.swapCoilPolarityRight;    
   else if (pfodCmd.startsWith("e11"))
     processSlider(pfodCmd, robot->trackingPerimeterTransitionTimeOut, 1);
   else if (pfodCmd.startsWith("e12"))

@@ -89,7 +89,8 @@ void Robot::loadSaveUserSettings(boolean readflag){
   eereadwrite(readflag, addr, perimeterPID.Ki);
   eereadwrite(readflag, addr, perimeterPID.Kd);
   eereadwrite(readflag, addr, perimeter.signalCodeNo);        
-  eereadwrite(readflag, addr, perimeter.swapCoilPolarity);  
+  eereadwrite(readflag, addr, perimeter.swapCoilPolarityLeft);  
+  eereadwrite(readflag, addr, perimeter.swapCoilPolarityRight);  
   eereadwrite(readflag, addr, perimeter.timeOutSecIfNotInside);  
   eereadwrite(readflag, addr, trackingBlockInnerWheelWhilePerimeterStruggling);  
   eereadwrite(readflag, addr, lawnSensorUse);

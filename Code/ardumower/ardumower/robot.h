@@ -391,6 +391,8 @@ public:
   unsigned long ROSTimeout;
   unsigned long ROSLastTimeMessage;
   unsigned long ROSlastMessageID;
+  unsigned long ROSLastTimeMotorCommand;
+  unsigned long ROSTimeoutMotorCommand;
   boolean ROSDebugVerbose;
   
 

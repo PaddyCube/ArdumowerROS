@@ -208,7 +208,7 @@ Mower::Mower(){
   // ------ ROS configuration-------------------------------------------  
    ROSDebugVerbose = true; // true for verbose info (slow) 
    ROSTimeout = 100000; // if no ROS message occurs in this period (ms), we're not connected anymore
-  
+   ROSTimeoutMotorCommand = 2000; // stop motors if no message arrives after this time
   // -----------configuration end-------------------------------------
 }
 

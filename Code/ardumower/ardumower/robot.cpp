@@ -82,6 +82,7 @@ Robot::Robot()
   stateTime = 0;
   idleTimeSec = 0;
   ROSlastMessageID = 0;
+  ROSLastTimeMotorCommand = 0;
 
   statsMowTimeTotalStart = false;
 
@@ -333,7 +334,7 @@ void Robot::setup()
   readSerial();
   //rc.readSerial();
   //resetIdleTime();
-  
+
   Console.println("Init ROSSerial");
   raiseROSNewStateEvent(stateCurr); // ready for communication
   ROSLastTimeMessage = millis();
@@ -1147,11 +1148,16 @@ void Robot::loop()
   // check if ROS timeout occured
   if ( (millis() - ROSLastTimeMessage > ROSTimeout ) && stateCurr != STATE_ERROR )
   {
-    Console.println("ROS Timeout");
     addErrorCounter(ERR_ROS);
     setNextState(STATE_ERROR);
   }
 
+  // check for TImeout motor command (stop motors)
+  if (millis() - ROSLastTimeMotorCommand > ROSTimeoutMotorCommand )
+  {
+    setMotorPWM(0,0, false);
+    motorMowEnable = false;
+  }
   // state machine - things to do *PERMANENTLY* for current state
   // robot state machine
   // http://wiki.ardumower.de/images/f/ff/Ardumower_states.png
@@ -1225,9 +1231,9 @@ void Robot::loop()
   // decide which motor control to use
   // ROS redefine needed
 
- // motorControl();
-//if (stateCurr != STATE_REMOTE)
- //   motorMowSpeedPWMSet = motorMowSpeedMaxPwm;
+  // motorControl();
+  //if (stateCurr != STATE_REMOTE)
+  //   motorMowSpeedPWMSet = motorMowSpeedMaxPwm;
 
   //  bumperRight = false;
   //  bumperLeft = false;
