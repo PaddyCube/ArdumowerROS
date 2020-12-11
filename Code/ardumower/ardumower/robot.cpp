@@ -475,13 +475,13 @@ void Robot::readSensors()
     }
     if (perimeter.signalTimedOut(0) || perimeter.signalTimedOut(1))
     {
-
-      //   Console.println("Error: perimeter too far away");
-      // ROS raise event perimeter error
-      sendROSDebugInfo(ROS_FATAL, "perimeter too far away");
-      addErrorCounter(ERR_PERIMETER_TIMEOUT);
-      setNextState(STATE_ERROR);
-
+      if ( (stateCurr != STATE_OFF) && (stateCurr != STATE_STATION)
+           && (stateCurr != STATE_STATION_CHARGING) )
+      {
+        sendROSDebugInfo(ROS_FATAL, "perimeter too far away");
+        addErrorCounter(ERR_PERIMETER_TIMEOUT);
+        setNextState(STATE_ERROR);
+      }
     }
   }
 
@@ -1111,7 +1111,7 @@ void Robot::loop()
     // ROS send info for debugging
     ledState = ~ledState;
     //checkErrorCounter();
-    sendROSDebugInfo(ROS_DEBUG, "alive");
+    //sendROSDebugInfo(ROS_DEBUG, "alive");
 
     if (stateCurr == STATE_REMOTE) {
       //   printRemote();
@@ -1155,7 +1155,7 @@ void Robot::loop()
   // check for TImeout motor command (stop motors)
   if (millis() - ROSLastTimeMotorCommand > ROSTimeoutMotorCommand )
   {
-    setMotorPWM(0,0, false);
+    setMotorPWM(0, 0, false);
     motorMowEnable = false;
   }
   // state machine - things to do *PERMANENTLY* for current state

@@ -46,20 +46,51 @@ enum {
 };
 
 // ROS sensor requests
-enum {
-  ROS_SEN_STATUS,
-  ROS_SEN_PERIM,
-  ROS_SEN_BAT,
-  ROS_SEN_MOTOR,
-  ROS_SEN_ODOM,
-  ROS_SEN_BUMPER,
-  ROS_SEN_DROP,
-  ROS_SEN_SONAR,
-  ROS_SEN_IMU,
-  ROS_SEN_RAIN,
-  ROS_SEN_FREE_WHEEL,
-  ROS_SEN_BUTTON
-};
+//enum {
+//  ROS_SEN_STATUS,
+//  ROS_SEN_PERIM,
+//  ROS_SEN_BAT,
+//  ROS_SEN_MOTOR,
+//  ROS_SEN_ODOM,
+//  ROS_SEN_BUMPER,
+//  ROS_SEN_DROP,
+//  ROS_SEN_SONAR,
+//  ROS_SEN_IMU,
+//  ROS_SEN_RAIN,
+//  ROS_SEN_FREE_WHEEL,
+//  ROS_SEN_BUTTON
+//};
+//
+//SEN_STATUS,
+//SEN_PERIM_LEFT,        // 0..MAX_PERIMETER
+//SEN_PERIM_RIGHT,       // 0..MAX_PERIMETER
+//SEN_LAWN_FRONT,
+//SEN_LAWN_BACK,
+//SEN_BAT_VOLTAGE,  // Volt * 100
+//SEN_CHG_CURRENT,  // Ampere * 100
+//SEN_CHG_VOLTAGE,  // Volt * 100
+//SEN_MOTOR_LEFT,   // 0..MAX_MOTOR_CURRENT
+//SEN_MOTOR_RIGHT,  // 0..MAX_MOTOR_CURRENT
+//SEN_MOTOR_MOW,    // 0..MAX_MOW_CURRENT
+//SEN_BUMPER_LEFT,  // LOW = pressed
+//SEN_BUMPER_RIGHT, // LOW = pressed
+//SEN_DROP_LEFT,    // LOW = pressed                                                                                                  // Dropsensor - Absturzsensor
+//SEN_DROP_RIGHT,   // LOW = pressed                                                                                                  // Dropsensor - Absturzsensor
+//SEN_SONAR_CENTER, // 0..SONAR_TRIGGER_DISTANCE
+//SEN_SONAR_LEFT,   // 0..SONAR_TRIGGER_DISTANCE
+//SEN_SONAR_RIGHT,  // 0..SONAR_TRIGGER_DISTANCE
+//SEN_BUTTON,       // LOW = pressed
+//SEN_IMU,
+//SEN_ODOM,
+//SEN_MOTOR_MOW_RPM,
+//SEN_RTC,
+//SEN_RAIN,
+//SEN_TILT,
+//SEN_FREE_WHEEL
+//
+//
+//
+//
 void Robot::initROSSerial() {
   Console.begin(CONSOLE_BAUDRATE);
 }
@@ -184,28 +215,43 @@ void Robot::processROSCommand(String command) {
         case REQUEST:
           // Check which sensor was requested
           switch (commandParts[1].toInt()) {
-            case ROS_SEN_STATUS:
+            case SEN_STATUS:
               responseStatus();
               break;
-            case ROS_SEN_PERIM:
+              
+            case SEN_PERIM_LEFT:
+            case SEN_PERIM_RIGHT:
               responsePerimeter();
-              break;
-            case ROS_SEN_BAT:
+              break;  
+                          
+            case SEN_BAT_VOLTAGE:
+            case SEN_CHG_VOLTAGE:
+            case SEN_CHG_CURRENT:
               responseBattery();
               break;
-            case ROS_SEN_MOTOR:
+              
+            case SEN_MOTOR_LEFT:
+            case SEN_MOTOR_RIGHT:
+            case SEN_MOTOR_MOW:
               responseMotor();
               break;
-            case ROS_SEN_ODOM:
+              
+            case SEN_ODOM:
               responseOdometry();
               break;
-            case ROS_SEN_BUMPER:
+              
+            case SEN_BUMPER_LEFT:
+            case SEN_BUMPER_RIGHT:
               responseBumper();
               break;
-            case ROS_SEN_SONAR:
+              
+            case SEN_SONAR_CENTER:
+            case SEN_SONAR_LEFT:
+            case SEN_SONAR_RIGHT:
               responseSonar();
               break;
-            case ROS_SEN_BUTTON:
+              
+            case SEN_BUTTON:
               responseButton();
               break;
             default:
@@ -235,9 +281,11 @@ void Robot::responseStatus() {
   Console.print('|');
   Console.print(ROSlastMessageID);
   Console.print('|');
-  Console.print(ROS_SEN_STATUS);
+  Console.print(SEN_STATUS);
   Console.print('|');
   Console.print(loopsPerSec);
+  Console.print('|');
+  Console.print(stateCurr);
   Console.print('|');
   Console.print(stateNames[stateCurr]);
   Console.print('|');
@@ -250,7 +298,7 @@ void Robot::responseBattery() {
   Console.print('|');
   Console.print(ROSlastMessageID);
   Console.print('|');
-  Console.print(ROS_SEN_BAT);
+  Console.print(SEN_BAT_VOLTAGE);
   Console.print('|');
   Console.print(batVoltage);
   Console.print('|');
@@ -264,7 +312,7 @@ void Robot::responsePerimeter() {
   Console.print('|');
   Console.print(ROSlastMessageID);
   Console.print('|');
-  Console.print(ROS_SEN_PERIM);
+  Console.print(SEN_PERIM_LEFT);
   Console.print('|');
   Console.print(perimeterLeftInside);
   Console.print('|');
@@ -286,7 +334,7 @@ void Robot::responseMotor() {
   Console.print('|');
   Console.print(ROSlastMessageID);
   Console.print('|');
-  Console.print(ROS_SEN_MOTOR);
+  Console.print(SEN_MOTOR_LEFT);
   Console.print('|');
   Console.print(motorLeftPWMCurr);
   Console.print('|');
@@ -301,7 +349,6 @@ void Robot::responseMotor() {
   Console.print(motorRightSenseCurrent);
   Console.print('|');
   Console.print(motorLeftSenseCounter);  // overload counters
-  Console.print('|');
   Console.print(motorRightSenseCounter);
   Console.print('|');
   Console.print(motorMowEnable); // mow motor enable
@@ -319,7 +366,7 @@ void Robot::responseOdometry() {
   Console.print('|');
   Console.print(ROSlastMessageID);
   Console.print('|');
-  Console.print(ROS_SEN_ODOM);
+  Console.print(SEN_ODOM);
   Console.print('|');
   Console.print(odometryLeft);
   Console.print('|');
@@ -331,7 +378,7 @@ void Robot::responseBumper() {
   Console.print('|');
   Console.print(ROSlastMessageID);
   Console.print('|');
-  Console.print(ROS_SEN_BUMPER);
+  Console.print(SEN_BUMPER_LEFT);
   Console.print('|');
   Console.print(bumperLeftCounter);
   Console.print('|');
@@ -347,7 +394,7 @@ void Robot::responseSonar() {
   Console.print('|');
   Console.print(ROSlastMessageID);
   Console.print('|');
-  Console.print(ROS_SEN_SONAR);
+  Console.print(SEN_SONAR_CENTER);
   Console.print('|');
   Console.print(sonarDistLeft);
   Console.print('|');
