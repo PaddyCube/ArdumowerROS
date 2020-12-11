@@ -53,7 +53,10 @@ find_package(catkin REQUIRED COMPONENTS
     battery.msg
     sonar.msg
     Status.msg
- )
+    perimeter.msg
+    perimeters.msg
+    bumper.msg
+ )  
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -187,7 +190,7 @@ include_directories(
 #   FILES_MATCHING PATTERN "*.h"
 #   PATTERN ".svn" EXCLUDE
 # )
-
+ 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
 # install(FILES
 #   # myfile1
