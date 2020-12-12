@@ -349,6 +349,7 @@ void Robot::responseMotor() {
   Console.print(motorRightSenseCurrent);
   Console.print('|');
   Console.print(motorLeftSenseCounter);  // overload counters
+   Console.print('|');
   Console.print(motorRightSenseCounter);
   Console.print('|');
   Console.print(motorMowEnable); // mow motor enable
