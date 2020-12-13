@@ -1,0 +1,5 @@
+<launch>
+   <node name="ardumower" pkg="ardumower_control" type="ardumower_node.py" output="screen">
+      <rosparam file="$/config/ardumower_params.yaml" command="load" />
+   </node>
+</launch>

@@ -56,6 +56,9 @@ find_package(catkin REQUIRED COMPONENTS
     perimeter.msg
     perimeters.msg
     bumper.msg
+    motor.msg
+    button.msg
+    odometry.msg
  )  
 
 ## Generate services in the 'srv' folder

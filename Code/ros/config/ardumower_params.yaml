@@ -1,0 +1,28 @@
+# Parameter configuration for ArdumowerTurtleBot
+# This file must be changed according to your real robot
+
+port: /dev/ttyACM0
+baud: 115200
+timeout: 0.5
+
+rate: 100
+#sensorstate_rate: 10
+
+#use_base_controller: False
+base_controller_rate: 10 # how often should base controller run?
+
+# For a robot that uses base_footprint, change base_frame to base_footprint
+base_frame: base_link
+
+# === Robot drivetrain parameters
+wheel_diameter: 0.067
+wheel_track: 0.23
+encoder_resolution: 11 # from Pololu for 131:1 motors
+gear_reduction: 35 # or define this as 1 and calculate ticks for one full rev of wheel
+
+# === PID parameters
+Kp: 10
+Kd: 12
+Ki: 0
+Ko: 50
+accel_limit: 1.0
