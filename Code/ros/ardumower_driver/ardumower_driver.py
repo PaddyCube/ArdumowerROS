@@ -14,31 +14,30 @@ from ardumower_ros import msg
 
 DEBUG = False
 
-class ArdumowerROSSensors:
-
-    # all types of ROS sensor messages
-    SEN_STATUS,SEN_PERIM_LEFT, SEN_PERIM_RIGHT, SEN_LAWN_FRONT,SEN_LAWN_BACK, \
-    SEN_BAT_VOLTAGE, SEN_CHG_CURRENT, SEN_CHG_VOLTAGE, \
-    SEN_MOTOR_LEFT,SEN_MOTOR_RIGHT,SEN_MOTOR_MOW, \
-    SEN_BUMPER_LEFT,SEN_BUMPER_RIGHT,SEN_DROP_LEFT,SEN_DROP_RIGHT, \
-    SEN_SONAR_CENTER,SEN_SONAR_LEFT,SEN_SONAR_RIGHT, \
-    SEN_BUTTON,SEN_IMU,SEN_ODOM,SEN_MOTOR_MOW_RPM,SEN_RTC,SEN_RAIN,SEN_TILT,SEN_FREE_WHEEL \
-     = range(0,26)
-
-    # Error types
-    ERR_MOTOR_LEFT,ERR_MOTOR_RIGHT,ERR_MOTOR_MOW,ERR_MOW_SENSE, \
-    ERR_IMU_COMM,ERR_IMU_TILT,ERR_RTC_COMM,ERR_RTC_DATA,ERR_PERIMETER_TIMEOUT, \
-    ERR_ODOMETRY_LEFT,ERR_ODOMETRY_RIGHT,ERR_BATTERY,ERR_CHARGER,ERR_GPS_COMM, \
-    ERR_GPS_DATA,ERR_ADC_CALIB,ERR_IMU_CALIB,ERR_EEPROM_DATA,ERR_CPU_SPEED,ERR_ENUM_COUNT, \
-    ERR_ROS = range(0,21)
-
-    # Ardumower States
-    STATE_OFF,STATE_ROS,STATE_REMOTE,STATE_ERROR,STATE_STATION_CHARGING, STATE_STATION = range(0,6)
-
-    # Ardumower Event Type
-    ROS_EV_NEW_STATE,ROS_EV_SENSOR_TRIGGER,ROS_EV_ERROR = range(0,3)
 
 class ArdumowerROSDriver:
+   # all types of ROS sensor messages
+   SEN_STATUS,SEN_PERIM_LEFT, SEN_PERIM_RIGHT, SEN_LAWN_FRONT,SEN_LAWN_BACK, \
+   SEN_BAT_VOLTAGE, SEN_CHG_CURRENT, SEN_CHG_VOLTAGE, \
+   SEN_MOTOR_LEFT,SEN_MOTOR_RIGHT,SEN_MOTOR_MOW, \
+   SEN_BUMPER_LEFT,SEN_BUMPER_RIGHT,SEN_DROP_LEFT,SEN_DROP_RIGHT, \
+   SEN_SONAR_CENTER,SEN_SONAR_LEFT,SEN_SONAR_RIGHT, \
+   SEN_BUTTON,SEN_IMU,SEN_ODOM,SEN_MOTOR_MOW_RPM,SEN_RTC,SEN_RAIN,SEN_TILT,SEN_FREE_WHEEL \
+    = range(0,26)
+
+   # Error types
+   ERR_MOTOR_LEFT,ERR_MOTOR_RIGHT,ERR_MOTOR_MOW,ERR_MOW_SENSE, \
+   ERR_IMU_COMM,ERR_IMU_TILT,ERR_RTC_COMM,ERR_RTC_DATA,ERR_PERIMETER_TIMEOUT, \
+   ERR_ODOMETRY_LEFT,ERR_ODOMETRY_RIGHT,ERR_BATTERY,ERR_CHARGER,ERR_GPS_COMM, \
+   ERR_GPS_DATA,ERR_ADC_CALIB,ERR_IMU_CALIB,ERR_EEPROM_DATA,ERR_CPU_SPEED,ERR_ENUM_COUNT, \
+   ERR_ROS = range(0,21)
+  
+   # Ardumower States
+   STATE_OFF,STATE_ROS,STATE_REMOTE,STATE_ERROR,STATE_STATION_CHARGING, STATE_STATION = range(0,6)
+
+   # Ardumower Event Type
+   ROS_EV_NEW_STATE,ROS_EV_SENSOR_TRIGGER,ROS_EV_ERROR = range(0,3)
+
    def __init__(self, port="/dev/ttyUSB0", baudrate=115200, timeout=0.5):
         
         self.port = port
@@ -61,30 +60,10 @@ class ArdumowerROSDriver:
         self.mowMotorEnable = false
 
         self.connect()
-        if DEBUG:
-            rospy.init_node('ardumower', log_level=rospy.DEBUG)
-        else:
-            rospy.init_node('ardumower')  
 
         # ROS Info Messages
         self.ROSMessageID = 0
         self.lastReceivedMessageID = 0
-
-        # ROS poll rates in Hz
-        # add here any sensor you want to poll
-        # !!! needs to be moved into Ardumower node later
-        self.pollRates = [0] * 26
-        self.pollRates.insert(ArdumowerROSSensors.SEN_STATUS, 1) # every 10 sec
-        self.pollRates.insert(ArdumowerROSSensors.SEN_BAT_VOLTAGE, 1)   
-        self.pollRates.insert(ArdumowerROSSensors.SEN_PERIM_LEFT, 10)
-
-        # time of last poll
-        # this list holds the time for the next sensor poll, based on
-        # list with ROS poll rates
-        # needs to be moved to base_controller later
-        self.timeNextPoll = []
-        for index, times in enumerate(self.pollRates):
-            self.timeNextPoll.insert(index, rospy.get_time() + 10 )
 
         # ROS Timeouts
         self.timeoutROSMessage = 5 # await at least one message every x sec.
@@ -93,7 +72,7 @@ class ArdumowerROSDriver:
 
     # Method to connect to serial console of Arduino
    def connect(self):
-        print "Connecting to Arduino on port", self.port, "..."
+        print ("Connecting to Arduino on port", self.port, "...")
         self.port = serial.Serial(port=self.port, baudrate=self.baudrate, timeout=self.timeout, writeTimeout=self.timeout)
         # The next line is necessary to give the firmware time to wake up.
         time.sleep(1)
@@ -169,10 +148,10 @@ class ArdumowerROSDriver:
        self.lastReceivedMessageID = items[1]
 
        if DEBUG:
-           print message
+           print (message)
 
        # Status message
-       if items[2] == str(ArdumowerROSSensors.SEN_STATUS):
+       if items[2] == str(ArdumowerROSDriver.SEN_STATUS):
            msgStatus = msg.Status()
            msgStatus.header.stamp = rospy.Time.now()
            msgStatus.loopPerSec = int(items[3])
@@ -181,9 +160,9 @@ class ArdumowerROSDriver:
            self.pubStatus.publish(msgStatus)
 
        # Battery
-       if items[2] == str(ArdumowerROSSensors.SEN_BAT_VOLTAGE) or \
-          items[2] == str(ArdumowerROSSensors.SEN_CHG_CURRENT) or \
-          items[2] == str(ArdumowerROSSensors.SEN_CHG_VOLTAGE):
+       if items[2] == str(ArdumowerROSDriver.SEN_BAT_VOLTAGE) or \
+          items[2] == str(ArdumowerROSDriver.SEN_CHG_CURRENT) or \
+          items[2] == str(ArdumowerROSDriver.SEN_CHG_VOLTAGE):
            msgBattery = msg.battery()
            msgBattery.header.stamp = rospy.Time.now()
            msgBattery.voltage = float(items[3])
@@ -192,8 +171,8 @@ class ArdumowerROSDriver:
            self.pubBattery.publish(msgBattery)
 
        # Bumper
-       if items[2] == str(ArdumowerROSSensors.SEN_BUMPER_LEFT) or \
-          items[2] == str(ArdumowerROSSensors.SEN_BUMPER_RIGHT):
+       if items[2] == str(ArdumowerROSDriver.SEN_BUMPER_LEFT) or \
+          items[2] == str(ArdumowerROSDriver.SEN_BUMPER_RIGHT):
            msgBumper = msg.bumper()
            msgBumper.header.stamp = rospy.Time.now()
            msgBumper.bumperLeftCount = int(items[3])
@@ -203,8 +182,8 @@ class ArdumowerROSDriver:
            self.pubBumper.publish(msgBumper)
 
        # Perimeter
-       if items[2] == str(ArdumowerROSSensors.SEN_PERIM_LEFT) or \
-          items[2] == str(ArdumowerROSSensors.SEN_PERIM_RIGHT):
+       if items[2] == str(ArdumowerROSDriver.SEN_PERIM_LEFT) or \
+          items[2] == str(ArdumowerROSDriver.SEN_PERIM_RIGHT):
            msgPeriLeft = msg.perimeter()
            msgPeriRight = msg.perimeter()
            msgPeri = msg.perimeters()
@@ -221,10 +200,10 @@ class ArdumowerROSDriver:
            self.pubPerimeter.publish(msgPeri)           
      
        # Motor
-       if items[2] == str(ArdumowerROSSensors.SEN_MOTOR_LEFT) or \
-          items[2] == str(ArdumowerROSSensors.SEN_MOTOR_RIGHT) or \
-          items[2] == str(ArdumowerROSSensors.SEN_MOTOR_MOW) or \
-          items[2] == str(ArdumowerROSSensors.SEN_MOTOR_MOW_RPM):
+       if items[2] == str(ArdumowerROSDriver.SEN_MOTOR_LEFT) or \
+          items[2] == str(ArdumowerROSDriver.SEN_MOTOR_RIGHT) or \
+          items[2] == str(ArdumowerROSDriver.SEN_MOTOR_MOW) or \
+          items[2] == str(ArdumowerROSDriver.SEN_MOTOR_MOW_RPM):
 
            msgMotor = msg.motor()
            msgMotor.header.stamp = rospy.Time.now()
@@ -244,9 +223,9 @@ class ArdumowerROSDriver:
            msgMotor.overloadMow = int(items[14])
            self.pubMotor.publish(msgMotor)
        # Sonar
-       if items[2] == str(ArdumowerROSSensors.SEN_SONAR_CENTER) or \
-          items[2] == str(ArdumowerROSSensors.SEN_SONAR_LEFT) or \
-          items[2] == str(ArdumowerROSSensors.SEN_SONAR_RIGHT):
+       if items[2] == str(ArdumowerROSDriver.SEN_SONAR_CENTER) or \
+          items[2] == str(ArdumowerROSDriver.SEN_SONAR_LEFT) or \
+          items[2] == str(ArdumowerROSDriver.SEN_SONAR_RIGHT):
            msgSonar = msg.sonar()
            msgSonar.header.stamp = rospy.Time.now()
            msgSonar.distanceLeft = int(items[3])
@@ -255,7 +234,7 @@ class ArdumowerROSDriver:
            self.pubSonar.publish(msgSonar)
 
        # Odometry
-       if items[2] == str(ArdumowerROSSensors.SEN_ODOM):
+       if items[2] == str(ArdumowerROSDriver.SEN_ODOM):
            msgOdom = msg.odometry()
            msgOdom.header.stamp = rospy.Time.now()
            msgOdom.leftTicks = int(items[3])
@@ -268,20 +247,20 @@ class ArdumowerROSDriver:
 
        if DEBUG:
            
-           print event
+           print (event)
        self.timeLastROSCommand = rospy.get_time()
        items = event.split("|")
 
        # determine type of event
-       if items[1] == str(ArdumowerROSSensors.ROS_EV_NEW_STATE):
+       if items[1] == str(ArdumowerROSDriver.ROS_EV_NEW_STATE):
            self.ArdumowerStatus = int(items[2])
        
-       if items[1] == str(ArdumowerROSSensors.ROS_EV_SENSOR_TRIGGER):
+       if items[1] == str(ArdumowerROSDriver.ROS_EV_SENSOR_TRIGGER):
            self.lastSensorTriggered = int(items[2])
            self.pollSensor(self.lastSensorTriggered)
            
     
-       if items[1] == str(ArdumowerROSSensors.ROS_EV_ERROR):
+       if items[1] == str(ArdumowerROSDriver.ROS_EV_ERROR):
            self.lastError = int(items[2])
 
 
@@ -290,7 +269,7 @@ class ArdumowerROSDriver:
        self.ROSMessageID+=1
        cmd = '$M1|' + str(self.ROSMessageID) + '|' + str((leftPwm) + '|' + str(rightPWM) + \
            '|' + str(enableMowMotor) + '\r\n'
-        self.port.write(cmd)   
+       self.port.write(cmd)   
 
    # Method to poll a sensor
    # Create command for request string and send it by serial console to Arduino

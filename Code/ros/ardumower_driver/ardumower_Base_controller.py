@@ -8,9 +8,10 @@
 # This code heavily bases on ros arduino bridge by hbrobotics
 # https://github.com/hbrobotics/ros_arduino_bridge/blob/indigo-devel/ros_arduino_python/src/ros_arduino_python/base_controller.py
 
-import roslib; # roslib.load_manifest('ardumower_driver') <- what's this?
+import roslib # roslib.load_manifest('ardumower_driver') <- what's this?
 import rospy
 import os
+from ardumower_driver import ArdumowerROSDriver
 
 from math import sin, cos, pi
 from geometry_msgs.msg import Quaternion, Twist, Pose
@@ -19,7 +20,7 @@ from tf.broadcaster import TransformBroadcaster
 
 # Ardumower
 #from ardumower_ros import msg
-import ardumower_ros
+from ardumower_ros import msg
 
 """ Class to receive Twist commands and publish Odometry data """
 class BaseController:
@@ -74,12 +75,12 @@ class BaseController:
 
         # Subscriptions
         rospy.Subscriber("cmd_vel", Twist, self.cmdVelCallback)
-        rospy.Subscriber("ardumower_odometry", ardumower_ros.msg.odometry, self.ardumowerOdomCallBack)
+        rospy.Subscriber("ardumower_odometry", msg.odometry, self.ardumowerOdomCallBack)
         
         # Clear any old odometry info
         #self.arduino.reset_encoders()
         # get the even latest Odometry value from robot
-        self.ardumower.pollSensor(ArdumowerROSSensor.SEN_ODOM)
+        self.ardumower.pollSensor(ArdumowerROSDriver.SEN_ODOM)
         
         # Set up the odometry broadcaster
         self.odomPub = rospy.Publisher('odom', Odometry, queue_size=5)
@@ -114,7 +115,7 @@ class BaseController:
     def poll(self):
         now = rospy.Time.now()
         if now > self.t_next:
-            self.ardumower.pollSensor(ArdumowerROSSensor.SEN_ODOM)
+            self.ardumower.pollSensor(ArdumowerROSDriver.SEN_ODOM)
             # Read the encoders
             # try:
             #     left_enc, right_enc = self.arduino.get_encoder_counts()
@@ -125,7 +126,7 @@ class BaseController:
 
 
     def ardumowerOdomCallBack(self, req):
-
+        now = rospy.Time.now()
         # time since last call                
         dt = now - self.then
         self.then = now
@@ -192,6 +193,7 @@ class BaseController:
         self.ardumower.setMotors(0, 0, False)
             
     def cmdVelCallback(self, req):
+        now = rospy.Time.now()
         # Handle velocity-based movement requests
         self.last_cmd_vel = rospy.Time.now()
         
