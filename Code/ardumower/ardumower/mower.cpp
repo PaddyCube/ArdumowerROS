@@ -419,9 +419,9 @@ void Mower::setup(){
   perimeter.setPins(pinPerimeterLeft, pinPerimeterRight);    
 
 // ARDUMOWERROS
-  //imu.init();
+  imu.init();
 	  
-  //gps.init();
+  gps.init();
 
   Robot::setup();  
 
@@ -551,14 +551,19 @@ void Mower::resetMotorFault(){
 int Mower::readSensor(char type){
   switch (type) {
 // motors------------------------------------------------------------------------------------------------
-#if defined (DRIVER_MC33926)
-   // case SEN_MOTOR_MOW: return ADCMan.read(pinMotorMowSense); break;
-    case SEN_MOTOR_RIGHT:// checkMotorFault(); 
-    return ADCMan.read(pinMotorRightSense); break;
-    case SEN_MOTOR_LEFT:  //checkMotorFault();
-     return ADCMan.read(pinMotorLeftSense); break;
+#if defined (DRIVER_L298N)
+    //case SEN_MOTOR_MOW: return ADCMan.read(pinMotorMowSense); break;
+    case SEN_MOTOR_RIGHT:return ADCMan.read(pinMotorRightSense); break;
+    case SEN_MOTOR_LEFT: return ADCMan.read(pinMotorLeftSense); break;
     //case SEN_MOTOR_MOW_RPM: break; // not used - rpm is upated via interrupt
 #endif
+#if defined (DRIVER_MC33926)
+    case SEN_MOTOR_MOW: return ADCMan.read(pinMotorMowSense); break;
+    case SEN_MOTOR_RIGHT: checkMotorFault(); return ADCMan.read(pinMotorRightSense); break;
+    case SEN_MOTOR_LEFT:  checkMotorFault(); return ADCMan.read(pinMotorLeftSense); break;
+    //case SEN_MOTOR_MOW_RPM: break; // not used - rpm is upated via interrupt
+#endif
+
 // perimeter----------------------------------------------------------------------------------------------
     case SEN_PERIM_LEFT: return perimeter.getMagnitude(0); break;
     case SEN_PERIM_RIGHT: return perimeter.getMagnitude(1); break;

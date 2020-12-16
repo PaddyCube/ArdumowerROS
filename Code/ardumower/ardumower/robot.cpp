@@ -1146,7 +1146,7 @@ void Robot::loop()
   // Process ROS commands here
 
   // check if ROS timeout occured
-  if ( (millis() - ROSLastTimeMessage > ROSTimeout ) && stateCurr != STATE_ERROR )
+  if ( (millis() - ROSLastTimeMessage > ROSTimeout ) && stateCurr != STATE_ERROR && stateCurr != STATE_STATION_CHARGING)
   {
     addErrorCounter(ERR_ROS);
     setNextState(STATE_ERROR);
@@ -1167,9 +1167,18 @@ void Robot::loop()
       // fatal-error
       if (millis() >= nextTimeErrorBeep)
       {
-        nextTimeErrorBeep = millis() + 5000;
+        nextTimeErrorBeep = millis() + 15000;
         beep(1, true);
       }
+
+// ROS REMOVE ME LATER FOR SAFETY REASON
+      if (chgVoltage > 5.0)
+      {
+        beep(2, true);
+        setNextState(STATE_STATION);
+
+      }
+
       break;
     case STATE_OFF:
       // robot is turned off
@@ -1184,6 +1193,18 @@ void Robot::loop()
         }
       }
       imuDriveHeading = imu.ypr.yaw;
+      break;
+
+case STATE_ROS:
+      if (batMonitor && (millis() - stateStartTime > 2000))
+      {
+        if (chgVoltage > 5.0)
+        {
+          beep(2, true);
+          setNextState(STATE_STATION);
+
+        }
+      }
       break;
 
     case STATE_STATION:

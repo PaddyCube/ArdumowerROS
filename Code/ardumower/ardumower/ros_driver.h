@@ -154,6 +154,10 @@ void Robot::readROSSerial() {
     if (serialdata[0] == '$') {
       ROSLastTimeMessage = millis();
       processROSCommand(serialdata);
+      if (stateCurr != STATE_ROS)
+      {
+        setNextState(STATE_ROS);
+      }
     }
   }
 
@@ -218,39 +222,39 @@ void Robot::processROSCommand(String command) {
             case SEN_STATUS:
               responseStatus();
               break;
-              
+
             case SEN_PERIM_LEFT:
             case SEN_PERIM_RIGHT:
               responsePerimeter();
-              break;  
-                          
+              break;
+
             case SEN_BAT_VOLTAGE:
             case SEN_CHG_VOLTAGE:
             case SEN_CHG_CURRENT:
               responseBattery();
               break;
-              
+
             case SEN_MOTOR_LEFT:
             case SEN_MOTOR_RIGHT:
             case SEN_MOTOR_MOW:
               responseMotor();
               break;
-              
+
             case SEN_ODOM:
               responseOdometry();
               break;
-              
+
             case SEN_BUMPER_LEFT:
             case SEN_BUMPER_RIGHT:
               responseBumper();
               break;
-              
+
             case SEN_SONAR_CENTER:
             case SEN_SONAR_LEFT:
             case SEN_SONAR_RIGHT:
               responseSonar();
               break;
-              
+
             case SEN_BUTTON:
               responseButton();
               break;
@@ -349,7 +353,7 @@ void Robot::responseMotor() {
   Console.print(motorRightSenseCurrent);
   Console.print('|');
   Console.print(motorLeftSenseCounter);  // overload counters
-   Console.print('|');
+  Console.print('|');
   Console.print(motorRightSenseCounter);
   Console.print('|');
   Console.print(motorMowEnable); // mow motor enable

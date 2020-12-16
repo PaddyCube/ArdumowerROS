@@ -30,9 +30,12 @@ choose your robot type, PCB version, baud rates, pin definitions etc.
 //#define ROBOT_MINI
 
 // ------- Choose motor driver (MC33926 is recommended) -----------------------
-#define DRIVER_MC33926
-//#define DRIVER_L298N
+//#define DRIVER_MC33926
+#define DRIVER_L298N
 
+// ------- Choose IMU BOARD (GY801 is recommended) ---------------------------
+#define IMU_GY801
+//#define IMU_MPU9250
 
 // DO NOT CHANGE - Due or Mega is detected automatically (based on Arduino IDE settings)
 #ifdef __AVR__
