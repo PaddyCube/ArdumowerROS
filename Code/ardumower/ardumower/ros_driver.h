@@ -45,21 +45,6 @@ enum {
   ROS_EV_ERROR
 };
 
-// ROS sensor requests
-//enum {
-//  ROS_SEN_STATUS,
-//  ROS_SEN_PERIM,
-//  ROS_SEN_BAT,
-//  ROS_SEN_MOTOR,
-//  ROS_SEN_ODOM,
-//  ROS_SEN_BUMPER,
-//  ROS_SEN_DROP,
-//  ROS_SEN_SONAR,
-//  ROS_SEN_IMU,
-//  ROS_SEN_RAIN,
-//  ROS_SEN_FREE_WHEEL,
-//  ROS_SEN_BUTTON
-//};
 //
 //SEN_STATUS,
 //SEN_PERIM_LEFT,        // 0..MAX_PERIMETER
@@ -91,6 +76,25 @@ enum {
 //
 //
 //
+
+
+void Robot::initROSSensorRates() {
+
+  // add here all sensors which should populate messages at a given rate (ms)
+  // other sensors can be triggered by ROS command
+  // use this for regular needed messages like Odometry, Perimeter, IMU, Sonar etc
+  // don't use this for other sensors like Rain, Button, Bumper to keep
+  // communication as low as possible
+
+  sensorRate[SEN_PERIM_LEFT] = 100;
+  sensorRate[SEN_BAT_VOLTAGE] = 5000;
+  sensorRate[SEN_MOTOR_LEFT] = 100;
+  sensorRate[SEN_SONAR_LEFT] = 100;
+  sensorRate[SEN_IMU] = 100;
+  sensorRate[SEN_ODOM] = 100;     // every 100 ms
+  sensorRate[SEN_STATUS] = 1000; // every 10.000ms
+}
+
 void Robot::initROSSerial() {
   Console.begin(CONSOLE_BAUDRATE);
 }
@@ -415,8 +419,40 @@ void Robot::responseButton() {
   Console.print('|');
   Console.print(ROSlastMessageID);
   Console.print('|');
+  Console.print(SEN_BUTTON);
+  Console.print('|');
   Console.println(buttonCounter);
   buttonCounter = 0;
+}
+
+void Robot::responseIMU() {
+  Console.print(ROSCommandSet[RESPONSE]);
+  Console.print('|');
+  Console.print(ROSlastMessageID);
+  Console.print('|');
+  Console.print(SEN_IMU);
+  Console.print('|');
+  Console.print(imu.ypr.yaw / PI * 180);
+  Console.print('|');
+  Console.print(imu.ypr.pitch / PI * 180);
+  Console.print('|');
+  Console.print(imu.ypr.roll / PI * 180);
+  Console.print('|');
+  Console.print(imu.gyro.x / PI * 180);
+  Console.print('|');
+  Console.print(imu.gyro.y / PI * 180);
+  Console.print('|');
+  Console.print(imu.gyro.z / PI * 180);
+  Console.print('|');
+  Console.print(imu.acc.x);
+  Console.print('|');
+  Console.print(imu.acc.y);
+  Console.print('|');
+  Console.print(imu.acc.z);
+  Console.print('|');
+  Console.print(imu.com.x);
+  Console.print('|');
+  Console.println(imu.com.y);
 }
 
 void Robot::responseMotorCommand() {
@@ -485,6 +521,67 @@ void Robot::processMotorCommand(String pwmLeftStr, String pwmRightStr, String mo
 
 void Robot::spinOnce() {
 
+  unsigned long now = millis();
+  for (int i = 0; i < SEN_NUM_TOKENS; i++)
+  {
+    if ( ( now > sensorNextSend[i] ) && sensorRate[i] != 0)
+    {
+      sendSpinMessage(i);
+      sensorNextSend[i] = now + sensorRate[i];
+    }
+  }
+}
+
+void Robot::sendSpinMessage(int sensorID) {
+  switch (sensorID) {
+    case SEN_STATUS:
+      responseStatus();
+      break;
+
+    case SEN_PERIM_LEFT:
+    case SEN_PERIM_RIGHT:
+      responsePerimeter();
+      break;
+
+    case SEN_BAT_VOLTAGE:
+    case SEN_CHG_VOLTAGE:
+    case SEN_CHG_CURRENT:
+      responseBattery();
+      break;
+
+    case SEN_MOTOR_LEFT:
+    case SEN_MOTOR_RIGHT:
+    case SEN_MOTOR_MOW:
+      responseMotor();
+      break;
+
+    case SEN_ODOM:
+      responseOdometry();
+      break;
+
+    case SEN_BUMPER_LEFT:
+    case SEN_BUMPER_RIGHT:
+      responseBumper();
+      break;
+
+    case SEN_SONAR_CENTER:
+    case SEN_SONAR_LEFT:
+    case SEN_SONAR_RIGHT:
+      responseSonar();
+      break;
+
+    case SEN_BUTTON:
+      responseButton();
+      break;
+
+    case SEN_IMU:
+      responseIMU();
+      break;
+
+    default:
+      sendROSDebugInfo(ROS_ERROR, "invalid sensor requested");
+      break;
+  }
 }
 
 #endif

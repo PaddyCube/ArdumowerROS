@@ -336,6 +336,7 @@ void Robot::setup()
   //resetIdleTime();
 
   Console.println("Init ROSSerial");
+  initROSSensorRates();
   raiseROSNewStateEvent(stateCurr); // ready for communication
   ROSLastTimeMessage = millis();
 }
@@ -1097,6 +1098,8 @@ void Robot::loop()
     gps.feed();
     processGPSData();
   }
+
+    spinOnce();
 
   if (millis() >= nextTimePfodLoop)
   {
