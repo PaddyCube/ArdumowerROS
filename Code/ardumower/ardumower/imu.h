@@ -24,6 +24,7 @@
 
 /* pitch/roll and heading estimation (IMU sensor fusion)  
    requires: GY-80 module (L3G4200D, ADXL345B, HMC5883L) 
+          or MPU9250 module()
    
 How to use it (example):     
   1. initialize IMU:                 IMU imu;  imu.init(); 
@@ -35,6 +36,7 @@ How to use it (example):
 #define IMU_H
 
 #include <Arduino.h>
+#include "MPU9250.h"
 
 // IMU state
 enum { IMU_RUN, IMU_CAL_COM };
@@ -80,6 +82,7 @@ public:
   void deleteCalib();  
   int callCounter;
   int errorCounter;
+  int imuResetSuccessCounter;
   boolean hardwareInitialized;  
   byte state;
   unsigned long lastAHRSTime;
@@ -129,7 +132,7 @@ public:
   float distance180(float x, float w);
   float fusionPI(float w, float a, float b);    
 private:  
-  void read();
+  bool read();
   void loadSaveCalib(boolean readflag);  
   void calibGyro();
   void loadCalib();  
@@ -140,17 +143,22 @@ private:
   float sermin(float oldvalue, float newvalue);
   float sermax(float oldvalue, float newvalue);
   // hardware
-  void initADXL345B();
-  boolean initL3G4200D();
-  void initHMC5883L();
-  void readL3G4200D(boolean useTa);
-  void readADXL345B();
-  void readHMC5883L();
-  boolean foundNewMinMax;
+  void initAccel();
+  boolean initGyro();
+  void initCom();
+  void initMMC5883MA();
+  bool hwInit();
+  bool readGyro();
+  bool readAccel();
+  bool readCom();
+  bool readMMC5883MA();
+  float MMCOffset[3];
+  int type5588;
+  int resetTryCount;
+  boolean foundNewMinMax; 
 };
 
 
 
 
 #endif
-
