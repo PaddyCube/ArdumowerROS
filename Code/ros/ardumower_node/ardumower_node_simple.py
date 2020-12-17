@@ -10,18 +10,19 @@
 
 
 import rospy
-from ardumower_driver import ArdumowerROSDriver
-from ardumower_driver import BaseController
+
+from ardumower_driver.ardumower_driver import ArdumowerROSDriver
+from ardumower_driver.ardumower_Base_controller import BaseController
 from geometry_msgs.msg import Twist
 import os, time
-import thread
+#import thread
 from serial.serialutil import SerialException
 
 from ardumower_ros import msg
 
 class ArdumowerROS():
     def __init__(self):
-        rospy.init_node('ArdumowerTurtlebot', log_level=rospy.INFO)
+        rospy.init_node('ArdumowerTurtlebot', log_level=rospy.DEBUG)
 
         # Get the actual node name in case it is set in the launch file
         self.name = rospy.get_name()
@@ -29,7 +30,7 @@ class ArdumowerROS():
         # Cleanup when termniating the node
         rospy.on_shutdown(self.shutdown)
 
-        self.port = rospy.get_param("~port", "/dev/ttyACM0")
+        self.port = rospy.get_param("~port", "/dev/ttyU")
         self.baud = int(rospy.get_param("~baud", 115200))
         self.timeout = rospy.get_param("~timeout", 0.5)
         self.base_frame = rospy.get_param("~base_frame", 'base_link')
@@ -59,7 +60,7 @@ class ArdumowerROS():
         sensor_params = rospy.get_param("~sensors", dict({}))
         self.pollRates = [0] * 26
 
-        for name, params in sensor_params.iteritems():
+        for name, params in sensor_params.items():
             # Set the direction to input if not specified
             # try:
             #     params['SensorID']
@@ -78,6 +79,7 @@ class ArdumowerROS():
         self.myBaseController = BaseController(self.driver, self.base_frame, self.name + "_base_controller")
 
     def spin(self):
+        rospy.loginfo("starting of sensors")
         r = rospy.Rate(self.rate)
         # Start polling the sensors and base controller
         while not rospy.is_shutdown():

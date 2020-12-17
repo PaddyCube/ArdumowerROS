@@ -38,9 +38,9 @@ class ArdumowerROSDriver:
    # Ardumower Event Type
    ROS_EV_NEW_STATE,ROS_EV_SENSOR_TRIGGER,ROS_EV_ERROR = range(0,3)
 
-   def __init__(self, port="/dev/ttyUSB0", baudrate=115200, timeout=0.5):
+   def __init__(self, serialport="/dev/ttyUSB0", baudrate=115200, timeout=0.5):
         
-        self.port = port
+        self.port = serialport
         self.baudrate = baudrate
         self.timeout = timeout
         self.ArdumowerStatus = -1
@@ -57,10 +57,10 @@ class ArdumowerROSDriver:
         self.pubOdometry = rospy.Publisher("ardumower_odometry", msg.odometry, queue_size=100)
 
         # define mow motor status here
-        self.mowMotorEnable = false
-
-        self.connect()
-
+        self.mowMotorEnable = False
+    
+        #self.connect()
+        
         # ROS Info Messages
         self.ROSMessageID = 0
         self.lastReceivedMessageID = 0
@@ -72,20 +72,21 @@ class ArdumowerROSDriver:
 
     # Method to connect to serial console of Arduino
    def connect(self):
-        print ("Connecting to Arduino on port", self.port, "...")
+        print ("Connecting to Arduino on port", self.port, " with baud rate ", self.baudrate, "...")
         self.port = serial.Serial(port=self.port, baudrate=self.baudrate, timeout=self.timeout, writeTimeout=self.timeout)
         # The next line is necessary to give the firmware time to wake up.
         time.sleep(1)
         self.port.flush()
-        time.sleep(10)
+        time.sleep(5)
 
    # read all incoming messages on serial console
    # analyze kind of message and call corresponding method for further processing
    # check if any message needs to be send to Arduino and trigger command send
    def pollSerial(self):
        while self.port.inWaiting() > 0:
-          line = self.port.readline()
-
+          line =  self.port.readline().decode('utf-8')
+          if DEBUG:
+              print(line)
           # Check for incoming ROS messages
           if line.startswith('$'):
               # check for command type
@@ -95,21 +96,6 @@ class ArdumowerROSDriver:
                    self.processResponseMessage(line)
                elif line.startswith('$EV'):
                    self.processEventMessage(line)
-
-
-          # Poll sensors only when connected
-          # move this later to base_controller
-       if self.ArdumowerStatus != -1:
-           
-           # Check for poll rates of sensors and others
-           currenttime = rospy.get_time()
-           # loop through list with poll rates. If poll rate != 0 and
-           # corresponding timeout in list timeNextPoll has been exceeded, 
-           # request new data for the actual sensor
-           for index, polls in enumerate(self.pollRates):
-               if currenttime > self.timeNextPoll[index] and polls != 0:
-                   self.timeNextPoll[index] = currenttime + 1/float(polls)
-                   self.pollSensor(index) 
 
 
    # Method process Info messages from Arduino into corresponding
@@ -267,22 +253,22 @@ class ArdumowerROSDriver:
    # Method to set motors
    def setMotors(self, leftPWM,rightPWM, enableMowMotor):
        self.ROSMessageID+=1
-       cmd = '$M1|' + str(self.ROSMessageID) + '|' + str((leftPwm) + '|' + str(rightPWM) + \
-           '|' + str(enableMowMotor) + '\r\n'
-       self.port.write(cmd)   
+       cmd = '$M1|' + str(self.ROSMessageID) + '|' + str(leftPWM) + '|' + str(rightPWM) + \
+            '|' + str(enableMowMotor) + '\r\n'
+       self.port.write(cmd.encode())   
 
    # Method to poll a sensor
    # Create command for request string and send it by serial console to Arduino
    def pollSensor(self, sensorID):
        self.ROSMessageID+=1
        cmd = '$RQ|' + str(self.ROSMessageID) + '|' + str(sensorID)+ '\r\n'
-       self.port.write(cmd)
+       self.port.write(cmd.encode('utf-8'))
 
    def close(self):
-        print "disconnect from serial port"
+        print("disconnect from serial port")
         self.port.close()
 
-
+# only needed if direct started as basic test
    def spin(self, rate):
        sleeprate = rospy.Rate(rate)
        while not rospy.is_shutdown():
@@ -295,19 +281,21 @@ class ArdumowerROSDriver:
             # check new Ardumower State
 
             # get data of last triggered sensor
-            # self.pollSensor(self.lastSensorTriggered)
+            self.pollSensor(self.SEN_STATUS)
             # sleep for rate (Hz))
             sleeprate.sleep()
        self.close()
 
-# only needed if direct started as basic test
+
 if __name__ == "__main__": 
     try:
-        # Initialize Ardumower ROS Driver   
-        robot = ArdumowerROSDriver(port="/dev/ttyACM0", baudrate=115200, timeout=0.5)
+        rospy.init_node('ArdumowerTurtlebot', log_level=rospy.DEBUG)
 
+        # Initialize Ardumower ROS Driver   
+        robot = ArdumowerROSDriver(serialport="/dev/ttyACM0", baudrate=115200, timeout=0.5)
+        robot.connect()
         # start observing serial port with given rate
-        robot.spin(100)
+        robot.spin(10)
     except KeyboardInterrupt:
-        print "close connection to Ardumower"
+        print ("close connection to Ardumower")
         robot.close()

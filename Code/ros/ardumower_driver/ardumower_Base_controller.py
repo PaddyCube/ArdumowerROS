@@ -25,6 +25,7 @@ from ardumower_ros import msg
 """ Class to receive Twist commands and publish Odometry data """
 class BaseController:
     def __init__(self, ardumower, base_frame, name="base_controllers"):
+
         self.ardumower = ardumower
         self.name = name
         self.base_frame = base_frame
@@ -33,10 +34,10 @@ class BaseController:
         self.stopped = False
                  
         pid_params = dict()
-        pid_params['wheel_diameter'] = rospy.get_param("~wheel_diameter", "") 
-        pid_params['wheel_track'] = rospy.get_param("~wheel_track", "")
-        pid_params['encoder_resolution'] = rospy.get_param("~encoder_resolution", "") 
-        pid_params['gear_reduction'] = rospy.get_param("~gear_reduction", 1.0)
+        pid_params['wheel_diameter'] = rospy.get_param("~wheel_diameter", 0.067) 
+        pid_params['wheel_track'] = rospy.get_param("~wheel_track", 0.23)
+        pid_params['encoder_resolution'] = rospy.get_param("~encoder_resolution", 11) 
+        pid_params['gear_reduction'] = rospy.get_param("~gear_reduction", 35.0)
         pid_params['Kp'] = rospy.get_param("~Kp", 20)
         pid_params['Kd'] = rospy.get_param("~Kd", 12)
         pid_params['Ki'] = rospy.get_param("~Ki", 0)
@@ -80,7 +81,7 @@ class BaseController:
         # Clear any old odometry info
         #self.arduino.reset_encoders()
         # get the even latest Odometry value from robot
-        self.ardumower.pollSensor(ArdumowerROSDriver.SEN_ODOM)
+        self.ardumower.pollSensor(ardumower.SEN_ODOM)
         
         # Set up the odometry broadcaster
         self.odomPub = rospy.Publisher('odom', Odometry, queue_size=5)
@@ -115,7 +116,7 @@ class BaseController:
     def poll(self):
         now = rospy.Time.now()
         if now > self.t_next:
-            self.ardumower.pollSensor(ArdumowerROSDriver.SEN_ODOM)
+            self.ardumower.pollSensor(ardumower.SEN_ODOM)
             # Read the encoders
             # try:
             #     left_enc, right_enc = self.arduino.get_encoder_counts()
@@ -141,51 +142,50 @@ class BaseController:
             dright = (req.rightTicks - self.enc_right) / self.ticks_per_meter
             dleft = (req.leftTicks - self.enc_left) / self.ticks_per_meter
 
-            self.enc_right = req.rightTicks
-            self.enc_left = req.leftTicks
+        self.enc_right = req.rightTicks
+        self.enc_left = req.leftTicks
             
-            dxy_ave = (dright + dleft) / 2.0
-            dth = (dright - dleft) / self.wheel_track
-            vxy = dxy_ave / dt
-            vth = dth / dt
+        dxy_ave = (dright + dleft) / 2.0
+        dth = (dright - dleft) / self.wheel_track
+        vxy = dxy_ave / dt
+        vth = dth / dt
                 
-            if (dxy_ave != 0):
-                dx = cos(dth) * dxy_ave
-                dy = -sin(dth) * dxy_ave
-                self.x += (cos(self.th) * dx - sin(self.th) * dy)
-                self.y += (sin(self.th) * dx + cos(self.th) * dy)
+        if (dxy_ave != 0):
+            dx = cos(dth) * dxy_ave
+            dy = -sin(dth) * dxy_ave
+            self.x += (cos(self.th) * dx - sin(self.th) * dy)
+            self.y += (sin(self.th) * dx + cos(self.th) * dy)
     
-            if (dth != 0):
-                self.th += dth 
+        if (dth != 0):
+            self.th += dth 
     
-            quaternion = Quaternion()
-            quaternion.x = 0.0 
-            quaternion.y = 0.0
-            quaternion.z = sin(self.th / 2.0)
-            quaternion.w = cos(self.th / 2.0)
+        quaternion = Quaternion()
+        quaternion.x = 0.0 
+        quaternion.y = 0.0
+        quaternion.z = sin(self.th / 2.0)
+        quaternion.w = cos(self.th / 2.0)
     
-            # Create the odometry transform frame broadcaster.
-            self.odomBroadcaster.sendTransform(
-                (self.x, self.y, 0), 
-                (quaternion.x, quaternion.y, quaternion.z, quaternion.w),
-                rospy.Time.now(),
-                self.base_frame,
-                "odom"
-                )
+        # Create the odometry transform frame broadcaster.
+        self.odomBroadcaster.sendTransform(
+            (self.x, self.y, 0), 
+            (quaternion.x, quaternion.y, quaternion.z, quaternion.w),
+            rospy.Time.now(),
+            self.base_frame,
+            "odom"
+            )
     
-            odom = Odometry()
-            odom.header.frame_id = "odom"
-            odom.child_frame_id = self.base_frame
-            odom.header.stamp = now
-            odom.pose.pose.position.x = self.x
-            odom.pose.pose.position.y = self.y
-            odom.pose.pose.position.z = 0
-            odom.pose.pose.orientation = quaternion
-            odom.twist.twist.linear.x = vxy
-            odom.twist.twist.linear.y = 0
-            odom.twist.twist.angular.z = vth
-
-            self.odomPub.publish(odom)
+        odom = Odometry()
+        odom.header.frame_id = "odom"
+        odom.child_frame_id = self.base_frame
+        odom.header.stamp = now
+        odom.pose.pose.position.x = self.x
+        odom.pose.pose.position.y = self.y
+        odom.pose.pose.position.z = 0
+        odom.pose.pose.orientation = quaternion
+        odom.twist.twist.linear.x = vxy
+        odom.twist.twist.linear.y = 0
+        odom.twist.twist.angular.z = vth
+        self.odomPub.publish(odom)
             
             
     def stop(self):
@@ -243,8 +243,41 @@ class BaseController:
             
         # Set motor speeds in encoder ticks per PID loop
         if not self.stopped:
+            print(self.v_left, ", " , self.v_right)
             self.ardumower.setMotors(self.v_left, self.v_right, False)
                 
         self.t_next = now + self.t_delta
 
+# only needed if direct started as basic test
+    def spin(self, rate):
+        rospy.loginfo("starting of sensors")
+        r = rospy.Rate(self.rate)
+        # Start polling the sensors and base controller
+        while not rospy.is_shutdown():
+            self.ardumower.pollSerial()
+            self.ardumower.pollSensor(self.ardumower.SEN_ODOM) 
+            r.sleep()
+
+
+if __name__ == "__main__": 
+    try:
+        # DEBUG ONLY
+        rospy.init_node('ArdumowerTurtlebot', log_level=rospy.DEBUG)
+
+
+        # Initialize Ardumower ROS Driver   
+        driver = ArdumowerROSDriver(serialport="/dev/ttyACM0", baudrate=115200, timeout=0.5)
+        # Make the connection
+        driver.connect()
+         # Initialize the base controller if used
+        myBaseController = BaseController(driver, 'base_frame',  "_base_controller")
+
+        # start observing serial port with given rate
+        myBaseController.spin(100)
+    except KeyboardInterrupt:
+        print ("close connection to Ardumower")
+        driver.close()     
+
+                
+        
         
