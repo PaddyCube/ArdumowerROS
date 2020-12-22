@@ -1,5 +1,8 @@
 # ArdumowerROS
 ROS based implementation of Ardumower DIY lawn mower
+This package can be used with ROS 1 (Noetic)
+
+Hint: I stopped development for ROS 1 and continue using ROS 2
 
 # Idea
 After many years of running my Ardumower with Arduino (Ardumower Azurit) firmware, I wanted to try and learn something new. 
