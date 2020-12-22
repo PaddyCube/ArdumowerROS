@@ -16,19 +16,17 @@ Because all these tasks need lot of computing power which Arduino doesn't provid
 - try different ROS packages for SLAM, mapping, navigation, path planning and so on
 
 # Current state of development
-nothing developed so far, still learning ROS
+- Ardumower firmware
+- ROS packages
+- files and instructions to build an ArdumowerTurlebot as R&D platform
 
 # Content of repository
 This repository contains (will contain) 
-- Ardumower firmware
-- ROS packages
+
 - URDF for simulation
-- files and instructions to build an ArdumowerTurlebot as R&D platform
+
 
 # Next steps
-- build a test platform (real robot) using Ardumower Hardware (PCB)
-- create new firmware (based on latest Azurit) by dropping all behaviors, simplify it to be ROS enabled
-- define needed ROS messages which should be transferred using rosserial
-- create a ROS package for simple teleoperating scenarios
-- add some safety new firmware, so robot stops if connection lost to ROS master, if perimeter was crossing, bumper hits obstacles and other 
-  critical situations
+This package contains implementation for ROS 1 (Noetic).For the next steps, I must learn lots about ROS navigation. Because ROS 2 has already been released and thinks become more easy there, I stop development for ROS at this point.
+
+Instead I'll bring the entire development to ROS 2 (Foxy). First of all, I migrate current state to ROS 2. Afterwards, I'll begin developing the more sophisticated topics.
