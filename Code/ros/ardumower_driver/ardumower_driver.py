@@ -193,10 +193,10 @@ class ArdumowerROSDriver:
 
            msgMotor = msg.motor()
            msgMotor.header.stamp = rospy.Time.now()
-           msgMotor.leftPWM = int(items[3])
-           msgMotor.rightPWM = int(items[4])
+           msgMotor.leftPWM = int(float(items[3]))
+           msgMotor.rightPWM = int(float(items[4]))
            msgMotor.motorLeftCurrent = float(items[7])
-           msgMotor.motorRightCurrent = float([items8])
+           msgMotor.motorRightCurrent = float(items[8])
            msgMotor.motorLeftSense = float(items[5])
            msgMotor.motorRightSense = float(items[6])
 
@@ -277,11 +277,7 @@ class ArdumowerROSDriver:
             # check for timeout
             if rospy.get_time() > self.timeLastROSCommand + self.timeoutROSMessage:
                 rospy.logfatal("Message timeout, no messages from Ardumower received")
-   
-            # check new Ardumower State
 
-            # get data of last triggered sensor
-            self.pollSensor(self.SEN_STATUS)
             # sleep for rate (Hz))
             sleeprate.sleep()
        self.close()
@@ -289,7 +285,7 @@ class ArdumowerROSDriver:
 
 if __name__ == "__main__": 
     try:
-        rospy.init_node('ArdumowerTurtlebot', log_level=rospy.DEBUG)
+        rospy.init_node('ArdumowerTurtlebotDriver', log_level=rospy.DEBUG)
 
         # Initialize Ardumower ROS Driver   
         robot = ArdumowerROSDriver(serialport="/dev/ttyACM0", baudrate=115200, timeout=0.5)

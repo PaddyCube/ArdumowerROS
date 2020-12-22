@@ -243,8 +243,8 @@ class BaseController:
             
         # Set motor speeds in encoder ticks per PID loop
         if not self.stopped:
-            print(self.v_left, ", " , self.v_right)
-            self.ardumower.setMotors(self.v_left, self.v_right, False)
+            print(int(float(self.v_left/1090)*255), ", " , int(float(self.v_right/1090)*255))
+            self.ardumower.setMotors(int(float(self.v_left/1090)*255), int(float(self.v_right/1090)*255), False)
                 
         self.t_next = now + self.t_delta
 
