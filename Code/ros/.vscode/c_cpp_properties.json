@@ -1,0 +1,27 @@
+{
+    "configurations": [
+        {
+            "browse": {
+                "databaseFilename": "",
+                "limitSymbolsToIncludedHeaders": true
+            },
+            "includePath": [
+                "/home/ros/catkin_ws/devel/include/**",
+                "/opt/ros/kinetic/include/**",
+                "/home/ros/catkin_ws/src/ardumower_ros/include/**",
+                "/home/ros/catkin_ws/src/ros_basics_tutorials/include/**",
+                "/home/ros/catkin_ws/src/ros_essentials_cpp/include/**",
+                "/home/ros/catkin_ws/src/ros_service/include/**",
+                "/home/ros/catkin_ws/src/ros_service_assignment/include/**",
+                "/home/ros/catkin_ws/src/ros_turlte_py/include/**",
+                "/usr/include/**"
+            ],
+            "name": "ROS",
+            "intelliSenseMode": "gcc-x64",
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "c11",
+            "cppStandard": "c++17"
+        }
+    ],
+    "version": 4
+}

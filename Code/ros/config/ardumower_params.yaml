@@ -1,0 +1,62 @@
+# Parameter configuration for ArdumowerTurtleBot
+# This file must be changed according to your real robot
+
+port: /dev/ttyACM0
+baud: 115200
+timeout: 0.5
+
+rate: 100
+#sensorstate_rate: 10
+
+#use_base_controller: False
+base_controller_rate: 10 # how often should base controller run?
+
+# For a robot that uses base_footprint, change base_frame to base_footprint
+base_frame: base_link
+
+# === Robot drivetrain parameters
+wheel_diameter: 0.067
+wheel_track: 0.23
+encoder_resolution: 11 # from Pololu for 131:1 motors
+gear_reduction: 35 # or define this as 1 and calculate ticks for one full rev of wheel
+
+# === PID parameters
+Kp: 10
+Kd: 12
+Ki: 0
+Ko: 50
+accel_limit: 1.0
+
+
+# SENSOR IDs
+# 0  SEN_STATUS
+# 1  SEN_PERIM_LEFT
+# 2  SEN_PERIM_RIGHT
+# 3  SEN_LAWN_FRONT
+# 4  SEN_LAWN_BACK
+# 5  SEN_BAT_VOLTAGE
+# 6  SEN_CHG_CURRENT
+# 7  SEN_CHG_VOLTAGE
+# 8  SEN_MOTOR_LEFT
+# 9  SEN_MOTOR_RIGHT
+# 10 SEN_MOTOR_MOW
+# 11 SEN_BUMPER_LEFT
+# 12 SEN_BUMPER_RIGHT
+# 13 SEN_DROP_LEFT
+# 14 SEN_DROP_RIGHT
+# 15 SEN_SONAR_CENTER
+# 16 SEN_SONAR_LEFT
+# 17 SEN_SONAR_RIGHT
+# 18 SEN_BUTTON
+# 19 SEN_IMU
+# 20 SEN_ODOM
+# 21 SEN_MOTOR_MOW_RPM
+# 22 SEN_RTC
+# 23 SEN_RAIN
+# 24 SEN_TILT
+# 25 SEN_FREE_WHEEL
+sensors: {
+  status:          {SensorID: 0, rate: 0.1},
+  battery:         {SensorID: 5, rate: 1},
+  perimeter:       {SensorID: 1, rate: 10},
+}

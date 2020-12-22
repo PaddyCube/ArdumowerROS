@@ -147,7 +147,7 @@ int I2CreadFrom(uint8_t device, uint8_t address, uint8_t num, uint8_t buff[], in
 
 
 void I2CScanner(){
-  byte error, address;
+  byte error, address, data;
   int nDevices = 0;
  
   Console.println("Scanning for I2C devices...");
@@ -168,7 +168,8 @@ void I2CScanner(){
         Console.print(" (");
         nDevices++;
         switch (address){          
-          case 0x1E: Console.print("probably HMC5883L"); break;          
+          case 0x1E: Console.print("probably HMC5883L"); break;   
+          case 0x30: Console.print("probably MMC5883MA"); break;       
           case 0x50: Console.print("probably AT24C32"); break;
           case 0x53: Console.print("probably ADXL345B"); break;
           case 0x60: Console.print("probably CMPS11"); break;          

@@ -50,7 +50,8 @@ Perimeter::Perimeter(){
       else sigcode[i] = value;
     lastValue = value;
   }  
-	swapCoilPolarity = false;
+	swapCoilPolarityLeft = false;
+ swapCoilPolarityRight = false;
   timedOutIfBelowSmag = 300;
   timeOutSecIfNotInside = 8;
   callCounter = 0;
@@ -156,7 +157,8 @@ void Perimeter::matchedFilter(byte idx){
   // magnitude for tracking (fast but inaccurate)    
   int16_t sigcode_size = sizeof sigcode;  
   mag[idx] = corrFilter(sigcode, subSample, sigcode_size, samples, sampleCount-sigcode_size*subSample, filterQuality[idx]);
-  if (swapCoilPolarity) mag[idx] *= -1;        
+  if (swapCoilPolarityLeft && idx == 0) mag[idx] *= -1;        
+  if (swapCoilPolarityRight && idx == 1) mag[idx] *= -1;        
   // smoothed magnitude used for signal-off detection
   smoothMag[idx] = 0.99 * smoothMag[idx] + 0.01 * ((float)abs(mag[idx]));
 
@@ -263,7 +265,3 @@ int16_t Perimeter::corrFilter(int8_t *H, int8_t subsample, int16_t M, int8_t *ip
     return sumMin;
   }  
 }
-
-
-
-

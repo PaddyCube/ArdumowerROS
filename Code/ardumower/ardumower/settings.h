@@ -85,16 +85,12 @@ void Robot::loadSaveUserSettings(boolean readflag){
   eereadwrite(readflag, addr, perimeterUse);
   eereadwrite(readflag, addr, perimeter.timedOutIfBelowSmag);        
   eereadwrite(readflag, addr, perimeterTriggerTimeout);
-  eereadwrite(readflag, addr, perimeterOutRollTimeMax);
-  eereadwrite(readflag, addr, perimeterOutRollTimeMin);
-  eereadwrite(readflag, addr, perimeterOutRevTime);
-  eereadwrite(readflag, addr, perimeterTrackRollTime );
-  eereadwrite(readflag, addr, perimeterTrackRevTime);
   eereadwrite(readflag, addr, perimeterPID.Kp);
   eereadwrite(readflag, addr, perimeterPID.Ki);
   eereadwrite(readflag, addr, perimeterPID.Kd);
   eereadwrite(readflag, addr, perimeter.signalCodeNo);        
-  eereadwrite(readflag, addr, perimeter.swapCoilPolarity);  
+  eereadwrite(readflag, addr, perimeter.swapCoilPolarityLeft);  
+  eereadwrite(readflag, addr, perimeter.swapCoilPolarityRight);  
   eereadwrite(readflag, addr, perimeter.timeOutSecIfNotInside);  
   eereadwrite(readflag, addr, trackingBlockInnerWheelWhilePerimeterStruggling);  
   eereadwrite(readflag, addr, lawnSensorUse);
@@ -108,7 +104,6 @@ void Robot::loadSaveUserSettings(boolean readflag){
   eereadwrite(readflag, addr, imuRollPID.Kd);      
   eereadwrite(readflag, addr, remoteUse);
   eereadwrite(readflag, addr, batMonitor);
-  eereadwrite(readflag, addr, batGoHomeIfBelow);
   eereadwrite(readflag, addr, batSwitchOffIfBelow);  
   eereadwrite(readflag, addr, batSwitchOffIfIdle);  
   eereadwrite(readflag, addr, batFactor);
@@ -117,12 +112,7 @@ void Robot::loadSaveUserSettings(boolean readflag){
   eereadwrite(readflag, addr, chgFactor);
   eereadwrite(readflag, addr, batFullCurrent);
   eereadwrite(readflag, addr, startChargingIfBelow);
-  eereadwrite(readflag, addr, stationRevTime);
-  eereadwrite(readflag, addr, stationRollTime);
-  eereadwrite(readflag, addr, stationForwTime);
-  eereadwrite(readflag, addr, stationCheckTime);
-  eereadwrite(readflag, addr, odometryUse);
-  eereadwrite(readflag, addr, odometryTicksPerRevolution);
+  //eereadwrite(readflag, addr, odometryTicksPerRevolution);
   //eereadwrite(readflag, addr, odometryTicksPerCm);
   //eereadwrite(readflag, addr, odometryWheelBaseCm);
   eereadwrite(readflag, addr, odometryLeftSwapDir);
@@ -297,16 +287,6 @@ void Robot::printSettingSerial(){
   Console.println(perimeterUse,1);
   Console.print  (F("perimeterTriggerTimeout                    : "));
   Console.println(perimeterTriggerTimeout);
-  Console.print  (F("perimeterOutRollTimeMax                    : "));
-  Console.println(perimeterOutRollTimeMax);
-  Console.print  (F("perimeterOutRollTimeMin                    : "));
-  Console.println(perimeterOutRollTimeMin);
-  Console.print  (F("perimeterOutRevTime                        : "));
-  Console.println(perimeterOutRevTime);
-  Console.print  (F("perimeterTrackRollTime                     : "));
-  Console.println(perimeterTrackRollTime);
-  Console.print  (F("perimeterTrackRevTime                      : "));
-  Console.println(perimeterTrackRevTime); 
   Console.print  (F("perimeterPID.Kp                            : "));
   Console.println(perimeterPID.Kp);
   Console.print  (F("perimeterPID.Ki                            : "));
@@ -376,8 +356,6 @@ void Robot::printSettingSerial(){
   Console.println(F("---------- battery -------------------------------------------"));
   Console.print  (F("batMonitor                                 : "));
   Console.println( batMonitor,1);
-  Console.print  (F("batGoHomeIfBelow                           : "));
-  Console.println(batGoHomeIfBelow); 
   Console.print  (F("batSwitchOffIfBelow                        : "));
   Console.println(batSwitchOffIfBelow); 
   Console.print  (F("batSwitchOffIfIdle                         : "));
@@ -399,25 +377,12 @@ void Robot::printSettingSerial(){
   Console.print  (F("chgFactor                                  : "));
   Console.println( chgFactor);
   
-  // ------  charging station -----------------------------------------------------
-  Console.println(F("---------- charging station ----------------------------------"));
-  Console.print  (F("stationRevTime                             : "));
-  Console.println(stationRevTime); 
-  Console.print  (F("stationRollTime                            : "));
-  Console.println(stationRollTime); 
-  Console.print  (F("stationForwTime                            : "));
-  Console.println( stationForwTime);
-  Console.print  (F("stationCheckTime                           : "));
-  Console.println(stationCheckTime); 
-  
   // ------ odometry --------------------------------------------------------------
   Console.println(F("---------- odometry ------------------------------------------"));
-  Console.print  (F("odometryUse                                : "));
-  Console.println( odometryUse,1);
   Console.print  (F("twoWayOdometrySensorUse                    : "));
   Console.println( twoWayOdometrySensorUse,1);
-  Console.print  (F("odometryTicksPerRevolution                 : "));
-  Console.println( odometryTicksPerRevolution);
+ // Console.print  (F("odometryTicksPerRevolution                 : "));
+ // Console.println( odometryTicksPerRevolution);
   //Console.print  (F("odometryTicksPerCm                         : "));
   //Console.println( odometryTicksPerCm);
   //Console.print  (F("odometryWheelBaseCm                        : "));
@@ -532,10 +497,11 @@ void Robot::deleteRobotStats(){
   Console.println(F("ALL STATISTICS DELETED!")); 
 }
 
-void Robot::addErrorCounter(byte errType){   
+void Robot::addErrorCounter(byte errType){
   // increase error counters (both temporary and maximum error counters)
   if (errorCounter[errType] < 255) errorCounter[errType]++;
-  if (errorCounterMax[errType] < 255) errorCounterMax[errType]++;    
+  if (errorCounterMax[errType] < 255) errorCounterMax[errType]++;
+  raiseROSErrorEvent(errType);
 }
 
 void Robot::resetErrorCounters(){
@@ -560,7 +526,6 @@ void Robot::printErrors(){
            case ERR_RTC_COMM:Console.println(F("ERR_RTC_COMM")); break;
            case ERR_RTC_DATA: Console.println(F("ERR_RTC_DATA")); break;
            case ERR_PERIMETER_TIMEOUT:Console.println(F("ERR_PERIMETER_TIMEOUT")); break;
-           case ERR_TRACKING:Console.println(F("ERR_TRACKING")); break;
            case ERR_ODOMETRY_LEFT:Console.println(F("ERR_ODOMETRY_LEFT")); break;
            case ERR_ODOMETRY_RIGHT:Console.println(F("ERR_ODOMETRY_RIGHT")); break;
            case ERR_BATTERY:Console.println(F("ERR_BATTERY")); break;
@@ -570,7 +535,6 @@ void Robot::printErrors(){
            case ERR_ADC_CALIB:Console.println(F("ERR_ADC_CALIB")); break;
            case ERR_IMU_CALIB:Console.println(F("ERR_IMU_CALIB")); break;
            case ERR_EEPROM_DATA:Console.println(F("ERR_EEPROM_DATA")); break;
-           case ERR_STUCK:Console.println(F("ERR_STUCK")); break;
         }
       }
     }
@@ -587,7 +551,7 @@ void Robot::checkErrorCounter(){
    for (int i=0; i < ERR_ENUM_COUNT; i++){
      // set to fatal error if any temporary error counter reaches 10
      if (errorCounter[i] > 10) {       
-       setNextState(STATE_ERROR, 0);
+       setNextState(STATE_ERROR);
      }
     }
   }  
@@ -633,4 +597,3 @@ void Robot::checkRobotStats(){
 
 //----------------new stats goes here------------------------------------------------------
 }
-

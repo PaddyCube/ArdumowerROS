@@ -34,7 +34,7 @@ Mower robot;
 
 Mower::Mower(){
   #if defined (ROBOT_ARDUMOWER)
-    name = "ArdumowerTurlebot"; //Set the Name of BT
+    name = "ArdumowerTurtlebot"; //Set the Name of BT
   #else
     name = "Mini";
   #endif
@@ -89,7 +89,7 @@ Mower::Mower(){
   freeWheelUse               = 0;          // has free wheel sensor?  
   
   //  ------ bumper (BumperDuino)-------------------------------
-  bumperUse                  = 0;          // has bumpers?
+  bumperUse                  = 1;          // has bumpers?
   tiltUse                    = 0;          // use tilt-sensor?
   
   //  ------ drop -----------------------------------
@@ -100,7 +100,7 @@ Mower::Mower(){
   rainUse                    = 0;          // use rain sensor?
   
   // ------ sonar ------------------------------------
-  sonarUse                   = 0;          // use ultra sonic sensor? (WARNING: robot will slow down, if enabled but not connected!)
+  sonarUse                   = 1;          // use ultra sonic sensor? (WARNING: robot will slow down, if enabled but not connected!)
   sonarLeftUse               = 1;
   sonarRightUse              = 1;
   sonarCenterUse             = 0;
@@ -110,11 +110,6 @@ Mower::Mower(){
   // ------ perimeter ---------------------------------
   perimeterUse               = 0;          // use perimeter?    
   perimeterTriggerTimeout    = 0;          // perimeter trigger timeout when escaping from inside (ms)  
-  perimeterOutRollTimeMax    = 2000;       // roll time max after perimeter out (ms)
-  perimeterOutRollTimeMin    = 750;        // roll time min after perimeter out (ms)
-  perimeterOutRevTime        = 2200;       // reverse time after perimeter out (ms)
-  perimeterTrackRollTime     = 1500;       // roll time during perimeter tracking
-  perimeterTrackRevTime      = 2200;       // reverse time during perimeter tracking
   #if defined (ROBOT_ARDUMOWER)
 	  perimeterPID.Kp            = 16;       // perimeter PID controller
     perimeterPID.Ki            = 8;
@@ -149,7 +144,6 @@ Mower::Mower(){
   #if defined (ROBOT_ARDUMOWER)
     batMonitor                 = 1;          // monitor battery and charge voltage?
 		batSwitchOffIfBelow        = 21.7;       // switch off battery if below voltage (Volt)
-		batGoHomeIfBelow           = 23.7;       // drive home voltage (Volt)  	
 		startChargingIfBelow       = 32.0;      // start charging if battery Voltage is below (99999=disabled)
 		batFull                    = 29.4;      // battery reference Voltage (fully charged) PLEASE ADJUST IF USING A DIFFERENT BATTERY VOLTAGE! FOR a 12V SYSTEM TO 14.4V		
 		batFullCurrent             = 0.1;       // current flowing when battery is fully charged	(amp), (-99999=disabled)	
@@ -178,34 +172,10 @@ Mower::Mower(){
   #endif
   
 	 batChargingCurrentMax       = 1.6;       // maximum current your charger can devliver  
-  
-  // ------  charging station ---------------------------
-  stationRevTime             = 1800;       // charge station reverse time (ms)
-  stationRollTime            = 1000;       // charge station roll time (ms)
-  stationForwTime            = 1500;       // charge station forward time (ms)
-  stationCheckTime           = 1700;       // charge station reverse check time (ms)
 
   // ------ odometry ------------------------------------
-  odometryUse                = 1;          // use odometry?    
-  
-	#if defined (ROBOT_ARDUMOWER)
-	  odometryTicksPerRevolution = 1060;       // encoder ticks per one full resolution (without any divider)
-	//	wheelDiameter              = 250;        // wheel diameter (mm)
-	//	odometryWheelBaseCm        = 36;         // wheel-to-wheel distance (cm)
 		odoLeftRightCorrection     = true;       // left-right correction for straight lines?
-  #else  // ROBOT_MINI		
-		odometryTicksPerRevolution = 20;      // encoder ticks per one full resolution
-	//	wheelDiameter              = 70;        // wheel diameter (mm)
-	//	odometryWheelBaseCm        = 14;         // wheel-to-wheel distance (cm)
-		odoLeftRightCorrection     = false; 		 // left-right correction for straight lines?
-	#endif
-		
-  #if defined (PCB_1_3)    
-		#define DIVIDER_DIP_SWITCH  2             //  sets used PCB odometry divider (2=DIV/2, 4=DIV/4, 8=DIV/8, etc.) 
-		odometryTicksPerRevolution /= DIVIDER_DIP_SWITCH;        // encoder ticks per one full resolution 
-  #endif
-  //odometryTicksPerCm         = ((float)odometryTicksPerRevolution) / (((float)wheelDiameter)/10.0) / (3.1415);    // computes encoder ticks per cm (do not change)
-  
+
   // ----- GPS -------------------------------------------
   gpsUse                     = 0;          // use GPS?
   stuckIfGpsSpeedBelow       = 0.2;        // if Gps speed is below given value the mower is stuck
@@ -235,7 +205,10 @@ Mower::Mower(){
   statsBatteryChargingCounterTotal  = 11;
   statsBatteryChargingCapacityTotal = 30000;
   
-  
+  // ------ ROS configuration-------------------------------------------  
+   ROSDebugVerbose = true; // true for verbose info (slow) 
+   ROSTimeout = 100000; // if no ROS message occurs in this period (ms), we're not connected anymore
+   ROSTimeoutMotorCommand = 2000; // stop motors if no message arrives after this time
   // -----------configuration end-------------------------------------
 }
 
@@ -324,18 +297,19 @@ void Mower::setup(){
   digitalWrite(pinBatterySwitch, HIGH);
 
   Buzzer.begin();
-	Console.begin(CONSOLE_BAUDRATE);  
+	//Console.begin(CONSOLE_BAUDRATE);  
 	I2Creset();	
   Wire.begin();            			
   unsigned long timeout = millis() + 10000;
 	while (millis() < timeout){
     if (!checkAT24C32()){
-      Console.println(F("PCB not powered ON or RTC module missing"));
+  //    Console.println(F("PCB not powered ON or RTC module missing"));
       delay(1000);
     } else break;
 	}
 	ADCMan.init();
-  Console.println(F("SETUP"));
+ // Console.println(F("SETUP"));
+
   
   // LED, buzzer, battery
   pinMode(pinLED, OUTPUT);    
@@ -444,6 +418,7 @@ void Mower::setup(){
   ADCMan.setCapture(pinVoltageMeasurement, 1, false);    
   perimeter.setPins(pinPerimeterLeft, pinPerimeterRight);    
 
+// ARDUMOWERROS
   imu.init();
 	  
   gps.init();
@@ -451,7 +426,7 @@ void Mower::setup(){
   Robot::setup();  
 
   if (esp8266Use) {
-    Console.println(F("Sending ESP8266 Config"));
+  //  Console.println(F("Sending ESP8266 Config"));
     ESP8266port.begin(ESP8266_BAUDRATE);
     ESP8266port.println(esp8266ConfigString);
     ESP8266port.flush();
@@ -493,12 +468,11 @@ void Mower::setup(){
 	// Wenn twoWayOdo == 1 dann:
 	// PCMSK2, PCINT21, HIGH
 	// PCMSK2, PCINT23, HIGH
-	if (odometryUse)
-	{ 
+
 	  PCICR |= (1<<PCIE2);
 	  PCMSK2 |= (1<<PCINT20);
 	  PCMSK2 |= (1<<PCINT22);	  
-	}
+	
 		
   //-------------------------------------------------------------------------	
   // mower motor speed sensor interrupt
@@ -534,21 +508,21 @@ void checkMotorFault(){
 	if (digitalRead(pinMotorLeftFault)==LOW){
     robot.addErrorCounter(ERR_MOTOR_LEFT);
     //Console.println(F("Error: motor left fault"));
-    robot.setNextState(STATE_ERROR, 0);
+    robot.setNextState(STATE_ERROR);
     //digitalWrite(pinMotorEnable, LOW);
     //digitalWrite(pinMotorEnable, HIGH);
   }
   if  (digitalRead(pinMotorRightFault)==LOW){
     robot.addErrorCounter(ERR_MOTOR_RIGHT);
     //Console.println(F("Error: motor right fault"));
-    robot.setNextState(STATE_ERROR, 0);
+    robot.setNextState(STATE_ERROR);
     //digitalWrite(pinMotorEnable, LOW);
     //digitalWrite(pinMotorEnable, HIGH);
   }
   if (digitalRead(pinMotorMowFault)==LOW){  
     robot.addErrorCounter(ERR_MOTOR_MOW);
     //Console.println(F("Error: motor mow fault"));
-    robot.setNextState(STATE_ERROR, 0);
+    robot.setNextState(STATE_ERROR);
     //digitalWrite(pinMotorMowEnable, LOW);
     //digitalWrite(pinMotorMowEnable, HIGH);
   }
@@ -577,22 +551,26 @@ void Mower::resetMotorFault(){
 int Mower::readSensor(char type){
   switch (type) {
 // motors------------------------------------------------------------------------------------------------
-#if defined (DRIVER_MC33926)
-   // case SEN_MOTOR_MOW: return ADCMan.read(pinMotorMowSense); break;
-    case SEN_MOTOR_RIGHT:// checkMotorFault(); 
-    return ADCMan.read(pinMotorRightSense); break;
-    case SEN_MOTOR_LEFT:  //checkMotorFault();
-     return ADCMan.read(pinMotorLeftSense); break;
+#if defined (DRIVER_L298N)
+    //case SEN_MOTOR_MOW: return ADCMan.read(pinMotorMowSense); break;
+    case SEN_MOTOR_RIGHT:return ADCMan.read(pinMotorRightSense); break;
+    case SEN_MOTOR_LEFT: return ADCMan.read(pinMotorLeftSense); break;
     //case SEN_MOTOR_MOW_RPM: break; // not used - rpm is upated via interrupt
 #endif
+#if defined (DRIVER_MC33926)
+    case SEN_MOTOR_MOW: return ADCMan.read(pinMotorMowSense); break;
+    case SEN_MOTOR_RIGHT: checkMotorFault(); return ADCMan.read(pinMotorRightSense); break;
+    case SEN_MOTOR_LEFT:  checkMotorFault(); return ADCMan.read(pinMotorLeftSense); break;
+    //case SEN_MOTOR_MOW_RPM: break; // not used - rpm is upated via interrupt
+#endif
+
 // perimeter----------------------------------------------------------------------------------------------
     case SEN_PERIM_LEFT: return perimeter.getMagnitude(0); break;
-    //case SEN_PERIM_RIGHT: return Perimeter.getMagnitude(1); break;
+    case SEN_PERIM_RIGHT: return perimeter.getMagnitude(1); break;
     
 // battery------------------------------------------------------------------------------------------------
     case SEN_BAT_VOLTAGE: ADCMan.read(pinVoltageMeasurement);  return ADCMan.read(pinBatteryVoltage); break;
     case SEN_CHG_VOLTAGE: return ADCMan.read(pinChargeVoltage); break;
-    //case SEN_CHG_VOLTAGE: return((int)(((double)analogRead(pinChargeVoltage)) * batFactor)); break;
     case SEN_CHG_CURRENT: return ADCMan.read(pinChargeCurrent); break;
     
 // buttons------------------------------------------------------------------------------------------------
@@ -612,19 +590,11 @@ int Mower::readSensor(char type){
     case SEN_DROP_RIGHT: return(digitalRead(pinDropRight)); break;                                                                                      // Dropsensor - Absturzsensor
     case SEN_DROP_LEFT: return(digitalRead(pinDropLeft)); break;                                                                                        // Dropsensor - Absturzsensor
 
-// sonar---------------------------------------------------------------------------------------------------
-    //case SEN_SONAR_CENTER: return(readURM37(pinSonarCenterTrigger, pinSonarCenterEcho)); break;  
-    //case SEN_SONAR_CENTER: return(readHCSR04(pinSonarCenterTrigger, pinSonarCenterEcho)); break;
-    //case SEN_SONAR_LEFT: return(readHCSR04(pinSonarLeftTrigger, pinSonarLeftEcho)); break;
-    //case SEN_SONAR_RIGHT: return(readHCSR04(pinSonarRightTrigger, pinSonarRightEcho)); break;
-    
+// sonar---------------------------------------------------------------------------------------------------   
     case SEN_SONAR_CENTER: return(NewSonarCenter.ping_cm()); break;
     case SEN_SONAR_LEFT: return(NewSonarLeft.ping_cm()); break;
     case SEN_SONAR_RIGHT: return(NewSonarRight.ping_cm()); break;    
-    
-    // case SEN_LAWN_FRONT: return(measureLawnCapacity(pinLawnFrontSend, pinLawnFrontRecv)); break;    
-    //case SEN_LAWN_BACK: return(measureLawnCapacity(pinLawnBackSend, pinLawnBackRecv)); break;    
-    
+
 // imu-------------------------------------------------------------------------------------------------------
     //case SEN_IMU: imuYaw=imu.ypr.yaw; imuPitch=imu.ypr.pitch; imuRoll=imu.ypr.roll; break;    
 // rtc--------------------------------------------------------------------------------------------------------
@@ -632,7 +602,7 @@ int Mower::readSensor(char type){
       if (!readDS1307(datetime)) {
         //Console.println("RTC data error!");        
         addErrorCounter(ERR_RTC_DATA);         
-        setNextState(STATE_ERROR, 0);       
+        setNextState(STATE_ERROR);       
       }
       break;
 // rain--------------------------------------------------------------------------------------------------------
@@ -656,7 +626,7 @@ void Mower::setActuator(char type, int value){
       if (!setDS1307(datetime)) {
         //Console.println("RTC comm error!");
         addErrorCounter(ERR_RTC_COMM); 
-        setNextState(STATE_ERROR, 0);       
+        setNextState(STATE_ERROR);       
       }
       break;
     case ACT_CHGRELAY: digitalWrite(pinChargeRelay, value); break;
@@ -669,5 +639,3 @@ void Mower::configureBluetooth(boolean quick){
   BluetoothConfig bt;
   bt.setParams(name, BLUETOOTH_PIN, BLUETOOTH_BAUDRATE, quick);
 }
-
-
