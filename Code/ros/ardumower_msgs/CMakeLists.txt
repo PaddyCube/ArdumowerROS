@@ -36,8 +36,13 @@ set(msg_files
   "msg/Sonar.msg"
   "msg/Status.msg"
   )
+
+set(srv_files
+  "srv/SetMotor.srv"
+  )  
 rosidl_generate_interfaces(${PROJECT_NAME}
   ${msg_files}
+  ${srv_files}
   DEPENDENCIES std_msgs
  )
 

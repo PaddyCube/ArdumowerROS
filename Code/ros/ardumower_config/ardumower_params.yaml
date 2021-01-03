@@ -1,20 +1,21 @@
 /**:
   ros__parameters:
     wheel_track: 0.23
+    accel_limit: 1.0
+    wheel_diameter: 0.067 # === Robot drivetrain parameters
 
 ardumower_driver:
   ros__parameters:
     port: "/dev/ttyACM0"
     baudrate: 115200
     timeout: 0.5
-    accel_limit: 1.0
-
+    
 ardumower_basecontroller:
   ros__parameters:
     rate: 100
     base_controller_rate: 10 # how often should base controller run?
+    base_controller_timeout: 20.0 # timeout of cmd_vel messages. Stop mower if no messages occurs
     base_frame: "base_link"
-    wheel_diameter: 0.067 # === Robot drivetrain parameters
     encoder_resolution: 11 # from Pololu for 131:1 motors
     gear_reduction: 35 # or define this as 1 and calculate ticks for one full rev of wheel
     Kp: 10 # === PID parameters

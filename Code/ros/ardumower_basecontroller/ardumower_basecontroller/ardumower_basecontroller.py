@@ -10,6 +10,8 @@ import rclpy
 from rclpy.node import Node
 import os
 from rclpy.duration import Duration
+from tf2_ros.transform_broadcaster import TransformBroadcaster
+from tf2_ros.transform_broadcaster import TransformStamped
 from ardumower_driver import ardumower_driver
 
 from math import sin, cos, pi
@@ -21,6 +23,7 @@ import tf2_ros
 # Ardumower
 
 from ardumower_msgs import msg
+from ardumower_msgs import srv
 
 """ Class to receive Twist commands and publish Odometry data """
 class BaseController(Node):
@@ -81,9 +84,9 @@ class BaseController(Node):
         # Internal data        
         self.enc_left = None            # encoder readings
         self.enc_right = None
-        self.x = 0                      # position in xy plane
-        self.y = 0
-        self.th = 0                     # rotation in radians
+        self.x = 0.0                      # position in xy plane
+        self.y = 0.0
+        self.th = 0.0                     # rotation in radians
         self.v_left = 0
         self.v_right = 0
         self.v_des_left = 0             # cmd_vel setpoint
@@ -103,8 +106,12 @@ class BaseController(Node):
         self.odomPub = self.create_publisher(Odometry, "odom", 10)
         self.odomBroadcaster = tf2_ros.TransformBroadcaster(self)
         
-        # Other publisher
-        self.motorPub = self.create_publisher(msg.Motor, "ardumower_set_motor", 10)
+        # Service clients
+        self.motorClient = self.create_client(srv.SetMotor, "ardumower_driver/SetMotor")
+        while not self.motorClient.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('service not available, waiting again...')
+        self.motorRequest = srv.SetMotor.Request()
+        
         
         self.get_logger().info("Started base controller for a base of " + str(self.wheel_track) + "m wide with " + str(self.gear_reduction * self.encoder_resolution) + " ticks per rev")
         self.get_logger().info("Publishing odometry data at: " + str(self.rate) + " Hz using " + str(self.base_frame) + " as base frame")
@@ -117,7 +124,9 @@ class BaseController(Node):
         # time since last call                
         dt = now - self.then
         self.then = now
-        dt = dt.to_sec()
+        #dt = dt.to_sec()
+        dt = dt.nanoseconds / 1e9
+        
             
         # Calculate odometry
         if self.enc_left == None:
@@ -125,11 +134,11 @@ class BaseController(Node):
             dleft = 0
         else:
             # distance per wheel
-            dright = (req.rightTicks - self.enc_right) / self.ticks_per_meter
-            dleft = (req.leftTicks - self.enc_left) / self.ticks_per_meter
+            dright = (req.right_ticks - self.enc_right) / self.ticks_per_meter
+            dleft = (req.left_ticks - self.enc_left) / self.ticks_per_meter
 
-        self.enc_right = req.rightTicks
-        self.enc_left = req.leftTicks
+        self.enc_right = req.right_ticks
+        self.enc_left = req.left_ticks
             
         dxy_ave = (dright + dleft) / 2.0
         dth = (dright - dleft) / self.wheel_track
@@ -152,31 +161,42 @@ class BaseController(Node):
         quaternion.w = cos(self.th / 2.0)
     
         # Create the odometry transform frame broadcaster.
-        self.odomBroadcaster.sendTransform(
-            (self.x, self.y, 0), 
-            (quaternion.x, quaternion.y, quaternion.z, quaternion.w),
-            self.get_clock().now().to_msg(),
-            self.base_frame,
-            "odom"
-            )
+        transformStamped = TransformStamped()
+        transformStamped.header.stamp = now.to_msg()
+        transformStamped.header.frame_id = "odom"
+        transformStamped.child_frame_id = "base_link"
+        transformStamped.transform.translation.x = self.x
+        transformStamped.transform.translation.y = self.y
+        transformStamped.transform.translation.z = 0.0
+        transformStamped.transform.rotation.x = quaternion.x
+        transformStamped.transform.rotation.y = quaternion.y
+        transformStamped.transform.rotation.z = quaternion.z
+        transformStamped.transform.rotation.w = quaternion.w
+        
+        self.odomBroadcaster.sendTransform(transformStamped)
     
         odom = Odometry()
         odom.header.frame_id = "odom"
         odom.child_frame_id = self.base_frame
-        odom.header.stamp = now
+        odom.header.stamp = now.to_msg()
         odom.pose.pose.position.x = self.x
         odom.pose.pose.position.y = self.y
-        odom.pose.pose.position.z = 0
+        odom.pose.pose.position.z = 0.0
         odom.pose.pose.orientation = quaternion
         odom.twist.twist.linear.x = vxy
-        odom.twist.twist.linear.y = 0
+        odom.twist.twist.linear.y = 0.0
         odom.twist.twist.angular.z = vth
         self.odomPub.publish(odom)
             
             
     def stop(self):
+        print("Stop")
         self.stopped = True
-        self.MotorPublisher(0, 0, False)
+        self.motorRequest.left_pwm = 0
+        self.motorRequest.right_pwm = 0
+        self.motorRequest.mow_enable = False
+        self.future = self.motorClient.call_async(self.motorRequest)
+        
       
     def timer_callback(self):
         now = self.get_clock().now()
@@ -184,6 +204,7 @@ class BaseController(Node):
             self.v_des_left = 0
             self.v_des_right = 0
             self.stop()
+            self.last_cmd_vel = now
             
     def cmdVelCallback(self, req):
         # Handle velocity-based movement requests
@@ -229,28 +250,22 @@ class BaseController(Node):
                 self.v_right = self.v_des_right
             
         # Set motor speeds in encoder ticks per PID loop
+        print("send motor command")
         if not self.stopped:
             print(int(float(self.v_left/1090)*255), ", " , int(float(self.v_right/1090)*255))
-            self.MotorPublisher(int(float(self.v_left/1090)*255), int(float(self.v_right/1090)*255), False)
-                
-        self.t_next = now + self.t_delta
+            
+            self.motorRequest.left_pwm = int(float(self.v_left/1090)*255)
+            self.motorRequest.right_pwm = int(float(self.v_right/1090)*255)
+            self.motorRequest.mow_enable = False
+            self.future = self.motorClient.call_async(self.motorRequest)
+        #self.t_next = now + self.t_delta
 
-    def MotorPublisher(self, left, right, mow):
-        msgMotor = msg.Motor()
-        msgMotor.left_pwm = left
-        msgMotor.right_pwm = right
-        msgMotor.mow_enable = mow
-        self.motorPub.publish(msgMotor)
 
 def main(args=None):
     rclpy.init(args=args)
-    # Initialize Ardumower ROS Driver   
-    #driver = ardumower_driver.ArdumowerROSDriver(serialport="/dev/ttyACM0", baudrate=115200, timeout=0.5)
-    #base_controller = BaseController(driver, "base_frame", name="ardumower_basecontroller" )
     base_controller = BaseController("base_frame", name="ardumower_basecontroller" )
 
     rclpy.spin(base_controller)
-    #driver.close()
     rclpy.shutdown()
 
 

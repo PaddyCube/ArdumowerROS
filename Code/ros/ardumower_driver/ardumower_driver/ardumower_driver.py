@@ -13,6 +13,7 @@ from rclpy.node import Node
 from datetime import datetime
 from datetime import timedelta
 from ardumower_msgs import msg
+from ardumower_msgs import srv
 
 DEBUG = False
 
@@ -53,7 +54,6 @@ class ArdumowerROSDriver(Node):
             ])
         
         self.port = self.get_parameter("port").get_parameter_value().string_value
-        print("Test")
         print(self.port)
         self.baudrate = self.get_parameter("baudrate").get_parameter_value().integer_value
         self.timeout = self.get_parameter("timeout").get_parameter_value().double_value
@@ -76,7 +76,7 @@ class ArdumowerROSDriver(Node):
         self.pubOdometry = self.create_publisher(
             msg.Odometry, "ardumower_odometry", 100)
 
-        self.subMotor = self.create_subscription(msg.Motor, "ardumower_set_motor", self.MotorCallback,10)
+        self.setMotorSrv = self.create_service(srv.SetMotor, "ardumower_driver/SetMotor", self.MotorCallback)
         # define mow motor status here
         self.mowMotorEnable = False
 
@@ -157,9 +157,9 @@ class ArdumowerROSDriver(Node):
        items = message.split("|")
        # get message type
        # check message ID
-       self.lastReceivedMessageID = items[1]
-
        try:
+           self.lastReceivedMessageID = items[1]
+       
            if DEBUG:
                print(message)
 
@@ -313,8 +313,9 @@ class ArdumowerROSDriver(Node):
        if self.get_clock().now() - self.timeLastROSCommand  > Duration(seconds= self.timeoutROSMessage, nanoseconds= 0):
            self.get_logger().fatal("Message timeout, no messages from Ardumower received")
    
-   def MotorCallback(self, req):
+   def MotorCallback(self, req, resp):
        self.setMotors(req.left_pwm, req.right_pwm, req.mow_enable)
+       return resp
 
 
 def main(args=None):
