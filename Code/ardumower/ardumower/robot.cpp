@@ -1233,19 +1233,6 @@ case STATE_ROS:
         if (chgVoltage < 5 && (millis() - stateStartTime > 2000)) setNextState(STATE_OFF);
       }
       break;
-      //  case STATE_REMOTE:
-      //    // remote control mode (RC)
-      //    //if (remoteSwitch > 50) setNextState(STATE_FORWARD, 0);
-      //    steer = ((double)motorSpeedMaxRpm / 2) * (((double)remoteSteer) / 100.0);
-      //    if (remoteSpeed < 0)
-      //      steer *= -1;
-      //    motorLeftSpeedRpmSet = ((double)motorSpeedMaxRpm) * (((double)remoteSpeed) / 100.0) - steer;
-      //    motorRightSpeedRpmSet = ((double)motorSpeedMaxRpm) * (((double)remoteSpeed) / 100.0) + steer;
-      //    motorLeftSpeedRpmSet = max(-motorSpeedMaxRpm, min(motorSpeedMaxRpm, motorLeftSpeedRpmSet));
-      //    motorRightSpeedRpmSet = max(-motorSpeedMaxRpm, min(motorSpeedMaxRpm, motorRightSpeedRpmSet));
-      //    motorMowSpeedPWMSet = ((double)motorMowSpeedMaxPwm) * (((double)remoteMow) / 100.0);
-      //    break;
-
 
   } // end switch
 
