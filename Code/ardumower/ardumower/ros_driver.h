@@ -452,7 +452,9 @@ void Robot::responseIMU() {
   Console.print('|');
   Console.print(imu.com.x);
   Console.print('|');
-  Console.println(imu.com.y);
+  Console.print(imu.com.y);
+  Console.print('|');
+  Console.println(imu.com.z);
 }
 
 void Robot::responseMotorCommand() {
