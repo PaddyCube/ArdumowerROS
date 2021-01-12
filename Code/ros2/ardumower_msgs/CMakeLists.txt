@@ -35,6 +35,7 @@ set(msg_files
   "msg/Perimeters.msg"
   "msg/Sonar.msg"
   "msg/Status.msg"
+  "msg/Imu.msg"
   )
 
 set(srv_files

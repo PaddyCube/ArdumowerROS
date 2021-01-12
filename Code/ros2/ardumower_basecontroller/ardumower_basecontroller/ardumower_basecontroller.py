@@ -12,13 +12,18 @@ import os
 from rclpy.duration import Duration
 from tf2_ros.transform_broadcaster import TransformBroadcaster
 from tf2_ros.transform_broadcaster import TransformStamped
+import tf2_ros
+
 from ardumower_driver import ardumower_driver
+from ardumower_helper import ardumower_helper
 
 from math import sin, cos, pi
 from geometry_msgs.msg import Quaternion, Twist, Pose
 from nav_msgs.msg import Odometry
-import tf2_ros
+from sensor_msgs.msg import Imu
 
+
+DEBUG = True
 
 # Ardumower
 
@@ -96,6 +101,9 @@ class BaseController(Node):
         # Subscribers
         self.subOdom = self.create_subscription(msg.Odometry, "ardumower_odometry", self.ardumowerOdomCallBack,10) 
         self.subCmdVel = self.create_subscription(Twist, "cmd_vel", self.cmdVelCallback,10)
+        
+        self.subImu = self.create_subscription(msg.Imu, "ardumower_imu", self.ardumowerImuCallBack, 10)
+        self.imuPub = self.create_publisher(Imu, "imu", 10)
         
         # Clear any old odometry info
         #self.arduino.reset_encoders()
@@ -188,7 +196,26 @@ class BaseController(Node):
         odom.twist.twist.angular.z = vth
         self.odomPub.publish(odom)
             
-            
+    def ardumowerImuCallBack(self, req):        
+        imu = Imu()
+        imu.header.frame_id = "imu"
+        imu.header.stamp = self.get_clock().now().to_msg()
+        q = ardumower_helper.ArdumowerTransform.quaternion_from_euler(req.roll, req.pitch, req.yaw)
+        imu.orientation.x = q[0]
+        imu.orientation.y = q[1]
+        imu.orientation.z = q[2]
+        imu.orientation.w = q[3]
+        
+        imu.angular_velocity.x = req.gyro_x
+        imu.angular_velocity.y = req.gyro_y
+        imu.angular_velocity.z = req.gyro_z
+        
+        imu.linear_acceleration.x = req.acc_x
+        imu.linear_acceleration.y = req.acc_y
+        imu.linear_acceleration.z = req.acc_z
+        
+        self.imuPub.publish(imu)
+        
     def stop(self):
         print("Stop")
         self.stopped = True
@@ -210,7 +237,8 @@ class BaseController(Node):
         # Handle velocity-based movement requests
         self.last_cmd_vel = self.get_clock().now()
         now = self.last_cmd_vel
-        
+        if DEBUG:
+            print(req.linear.x, ", ", req.angular.z)
         x = req.linear.x         # m/s
         th = req.angular.z       # rad/s
 
@@ -230,6 +258,9 @@ class BaseController(Node):
         #self.v_des_right = int(right * self.ticks_per_meter / self.ardumower.PID_RATE)
         self.v_des_left = int(left * self.ticks_per_meter )
         self.v_des_right = int(right * self.ticks_per_meter )
+        
+        if DEBUG:
+            print(self.v_des_left, ", ", self.v_left)
                 
         if self.v_left < self.v_des_left:
             self.v_left += self.max_accel
@@ -252,10 +283,8 @@ class BaseController(Node):
         # Set motor speeds in encoder ticks per PID loop
         print("send motor command")
         if not self.stopped:
-            print(int(float(self.v_left/1090)*255), ", " , int(float(self.v_right/1090)*255))
-            
-            self.motorRequest.left_pwm = int(float(self.v_left/1090)*255)
-            self.motorRequest.right_pwm = int(float(self.v_right/1090)*255)
+            self.motorRequest.left_pwm = int(self.v_left)
+            self.motorRequest.right_pwm = int(self.v_right)
             self.motorRequest.mow_enable = False
             self.future = self.motorClient.call_async(self.motorRequest)
         #self.t_next = now + self.t_delta

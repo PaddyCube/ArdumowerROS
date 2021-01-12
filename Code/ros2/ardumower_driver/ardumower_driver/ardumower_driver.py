@@ -2,6 +2,7 @@
 # This package contains a class to communicate with Ardumower Hardware
 # Package is used to communicate using Serial console and doesn't use any ROS packages at this point
 
+from math import pi
 from sys import argv
 from rclpy.duration import Duration
 import serial
@@ -15,7 +16,7 @@ from datetime import timedelta
 from ardumower_msgs import msg
 from ardumower_msgs import srv
 
-DEBUG = False
+DEBUG = True
 
 
 class ArdumowerROSDriver(Node):
@@ -50,13 +51,24 @@ class ArdumowerROSDriver(Node):
             parameters=[
                 ("port", None),
                 ("timeout", None),
-                ("baudrate", None)
+                ("baudrate", None),
+                ("max_velocity", None),
+                ("wheel_diameter", None),
+                ("encoder_resolution", None),
+                ("gear_reduction", None),
             ])
         
         self.port = self.get_parameter("port").get_parameter_value().string_value
         print(self.port)
         self.baudrate = self.get_parameter("baudrate").get_parameter_value().integer_value
         self.timeout = self.get_parameter("timeout").get_parameter_value().double_value
+        self.max_velocity = self.get_parameter("max_velocity").get_parameter_value().double_value
+        self.encoder_resolution = self.get_parameter("encoder_resolution").get_parameter_value().integer_value
+        self.gear_reduction = self.get_parameter("gear_reduction").get_parameter_value().integer_value
+        self.wheel_diameter = self.get_parameter("wheel_diameter").get_parameter_value().double_value
+        # calculate highest possible tick rate of motors
+        # this gets used to translate velocity commands to PWM rate (255)
+        self.max_ticks = self.max_velocity / (self.wheel_diameter + pi) * self.encoder_resolution * self.gear_reduction
         self.ArdumowerStatus = -1
         self.lastSensorTriggered = -1
         self.lastError = -1
@@ -75,6 +87,7 @@ class ArdumowerROSDriver(Node):
         self.pubSonar = self.create_publisher(msg.Sonar, "ardumower_sonar", 10)
         self.pubOdometry = self.create_publisher(
             msg.Odometry, "ardumower_odometry", 100)
+        self.pubIMU = self.create_publisher(msg.Imu, "ardumower_imu", 10)
 
         self.setMotorSrv = self.create_service(srv.SetMotor, "ardumower_driver/SetMotor", self.MotorCallback)
         # define mow motor status here
@@ -254,6 +267,24 @@ class ArdumowerROSDriver(Node):
                msgOdom.right_ticks = int(items[4])
                self.pubOdometry.publish(msgOdom)
 
+           # IMU
+           if items[2] == str(ArdumowerROSDriver.SEN_IMU):
+               msgImu = msg.Imu()
+               msgImu.header.stamp = self.get_clock().now().to_msg()
+               msgImu.yaw = float(items[3])
+               msgImu.pitch = float(items[4])
+               msgImu.roll = float(items[5])
+               msgImu.gyro_x = float(items[6])
+               msgImu.gyro_y = float(items[7])
+               msgImu.gyro_z = float(items[8])
+               msgImu.acc_x = float(items[9])
+               msgImu.acc_y = float(items[10])
+               msgImu.acc_z = float(items[11])
+               msgImu.compass_x = float(items[12])
+               msgImu.compass_y = float(items[13])
+               msgImu.compass_z = float(items[14])
+               self.pubIMU.publish(msgImu)
+
        except IndexError:
             self.serialMessageErrorCounter+=1
             self.get_logger().error("Message structure invalid " + message )
@@ -314,7 +345,30 @@ class ArdumowerROSDriver(Node):
            self.get_logger().fatal("Message timeout, no messages from Ardumower received")
    
    def MotorCallback(self, req, resp):
-       self.setMotors(req.left_pwm, req.right_pwm, req.mow_enable)
+       leftpwm = int(float(req.left_pwm / self.max_ticks) * 255)
+       rightpwm = int (float(req.right_pwm / self.max_ticks) * 255 )
+       # check for max possible pwm value 
+       if leftpwm < -255 or leftpwm > 255:
+           # if left pwm is out of range, adjust rightpwm accordingly
+           factor = abs(float(255 / leftpwm))
+           rightpwm = int(rightpwm * factor )
+           if leftpwm < 0:
+               leftpwm = -255
+           else:    
+               leftpwm = 255
+           
+       if rightpwm < -255 or rightpwm > 255:
+           # if rightpwm is out of range, adjust leftpwm accordingly
+           factor = abs(float(255 / rightpwm))
+           leftpwm = int(leftpwm * factor )
+           if rightpwm < 0:
+               rightpwm = -255
+           else:    
+               rightpwm = 255
+       
+       if DEBUG:
+           print(leftpwm, ", ", rightpwm)
+       self.setMotors(leftpwm, rightpwm, req.mow_enable)
        return resp
 
 
