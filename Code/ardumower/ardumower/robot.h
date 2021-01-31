@@ -183,10 +183,6 @@ class Robot
     unsigned long nextTimeTimer;
     // ----- bluetooth -------------------------------------
     char bluetoothUse; // use Bluetooth module?
-    // ----- esp8266 ---------------------------------------
-    char esp8266Use; // use ESP8266 Wifi module?
-    String esp8266ConfigString = "";
-
     // -------- gps state -------------------------------
     GPS gps;
     char gpsUse; // use GPS?
@@ -604,7 +600,6 @@ class Robot
     //virtual void calcOdometry();
     virtual void menu();
     virtual void commsMenuBT();
-    virtual void commsMenuWifi();
     virtual void commsMenuSelect();
     virtual void configureBluetooth(boolean quick) {};
 

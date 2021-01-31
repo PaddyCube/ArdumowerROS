@@ -123,21 +123,21 @@ choose your robot type, PCB version, baud rates, pin definitions etc.
 #define CONSOLE_BAUDRATE    115200      // baudrate if using Ardumower Control Center and DUE 
 //#define ROS_BAUDRATE 115200 // baudrate for rosserial
 #define BLUETOOTH_BAUDRATE  19200       // baudrate used for communication with Bluetooth module (Ardumower default: 19200)
-#define ESP8266_BAUDRATE    115200      // baudrate used for communication with esp8266 Wifi module
+#define ROS2_BAUDRATE    115200      // baudrate used for communication with ROS2
 #define BLUETOOTH_PIN       1234
 
 
-// ------ used serial ports for console, Bluetooth, ESP8266 -----------------------------
+// ------ used serial ports for console, Bluetooth, ROS2 -----------------------------
 #ifdef __AVR__
   // Arduino Mega
   #define Console Serial
-  #define ESP8266port Serial1
+  #define ROS2Console Serial1
   #define Bluetooth Serial2
 #else 
   // Arduino Due  
    // Due has two serial ports: Native (SerialUSB) and Programming (Serial) - we want to use 'SerialUSB' for 'Console'
   #define Console Serial
-  #define ESP8266port Serial1
+  #define ROS2Console Serial1
   #define Bluetooth Serial2  // Ardumower default
 #endif
 

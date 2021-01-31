@@ -94,7 +94,7 @@ void Robot::printMenu() {
   Console.println(F("i=scan for I2C devices"));
   Console.println(F("1=test motors"));
   Console.println(F("2=test odometry"));
-  Console.println(F("3=communications menu (setup Bluetooth & WIFI)"));
+  Console.println(F("3=communications menu (setup Bluetooth)"));
   Console.println(F("4=ADC calibration (perimeter sender & charger must be off)"));
   Console.println(F("5=calibrate IMU acceleration next side"));
   Console.println(F("6=calibrate IMU compass start/stop"));
@@ -277,8 +277,6 @@ void Robot::menu() {
         case '3':
           if (bluetoothUse)
             commsMenuBT();
-          else if (esp8266Use)
-            commsMenuWifi();
           printMenu();
           break;
         case '5':
@@ -376,52 +374,20 @@ void Robot::commsMenuBT() {
   }
 }
 
-void Robot::commsMenuWifi() {
-  while (true) {
-    Console.println();
-    Console.println(F("COMMUNICATIONS MENU  === WIFI =="));
-    Console.print(F(" Current Config: \""));
-    Console.print(esp8266ConfigString);
-    Console.println(F("\""));
-    Console.println(F(" 1=Select other communication method"));
-    Console.println(F(" 2=configure"));
-    Console.println(F(" 0=Main Menu"));
-    Console.println();
 
-    delay(100);
-    purgeConsole();
-
-    switch (waitCharConsole()) {
-      case '0':
-        return;
-      case '1':
-        commsMenuSelect();
-        return;
-      case '2':
-        Console.print(F("\nEnter Connection String: "));
-        delay(100);
-        purgeConsole();
-        esp8266ConfigString = waitStringConsole();
-        break;
-    }
-  }
-}
 
 void Robot::commsMenuSelect(void) {
   bluetoothUse = 0;
-  esp8266Use = 0;
 
   while (true) {
     Console.println(F("Select communication method"));
     Console.println(F(" 1=Bluetooth"));
-    Console.println(F(" 2=Wifi"));
 
     delay(100);
     purgeConsole();
 
     switch (waitCharConsole()) {
       case '1': bluetoothUse = 1; return;
-      case '2': esp8266Use = 1; return;
     }
   }
 }

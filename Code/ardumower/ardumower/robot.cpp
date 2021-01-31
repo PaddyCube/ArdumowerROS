@@ -336,6 +336,8 @@ void Robot::setup()
   //resetIdleTime();
 
   Console.println("Init ROSSerial");
+  initROSSerial(); // start serial console
+  sendROSDebugInfo(ROS_DEBUG, "SETUP");
   initROSSensorRates();
   raiseROSNewStateEvent(stateCurr); // ready for communication
   ROSLastTimeMessage = millis();
@@ -1076,7 +1078,7 @@ void Robot::loop()
   int steer;
   ADCMan.run();
 
-  // ROS no read of serial console in loop, only setup
+  readSerial();
   readROSSerial();
   rc.readSerial();
   //resetIdleTime();
