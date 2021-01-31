@@ -1,0 +1,61 @@
+menu "micro-ROS example-app settings"
+
+    config MICRO_ROS_APP_STACK
+        int "Stack the micro-ROS app (Bytes)"
+        default 15000
+        help
+        Stack size in Bytes of the micro-ROS app
+
+    config MICRO_ROS_APP_TASK_PRIO
+        int "Priority of the micro-ROS app"
+        default 5
+        help
+        Priority of micro-ros task higher value means higher priority
+    
+endmenu
+
+menu "ROS2 UART Configuration"
+
+    config UART_PORT_NUM
+        int "UART port number"
+        range 0 2 if IDF_TARGET_ESP32
+        range 0 1 if IDF_TARGET_ESP32S2
+        default 2 if IDF_TARGET_ESP32
+        default 1 if IDF_TARGET_ESP32S2
+        help
+            UART communication port number for Ardumower.
+            See UART documentation for available port numbers.
+
+    config UART_BAUD_RATE
+        int "UART communication speed"
+        range 1200 115200
+        default 115200
+        help
+            UART communication speed et According to Ardumower Firmware.
+
+    config UART_RXD
+        int "UART RXD pin number"
+        range 0 34 if IDF_TARGET_ESP32
+        range 0 46 if IDF_TARGET_ESP32S2
+        default 16
+        help
+            GPIO number for UART RX pin. See UART documentation for more information
+            about available pin numbers for UART.
+
+    config UART_TXD
+        int "UART TXD pin number"
+        range 0 34 if IDF_TARGET_ESP32
+        range 0 46 if IDF_TARGET_ESP32S2
+        default 17
+        help
+            GPIO number for UART TX pin. See UART documentation for more information
+            about available pin numbers for UART.
+
+    config UART_TASK_STACK_SIZE
+        int "UART task stack size"
+        range 1024 16384
+        default 2048
+        help
+            Defines stack size for UART. Insufficient stack size can cause crash.
+
+endmenu
