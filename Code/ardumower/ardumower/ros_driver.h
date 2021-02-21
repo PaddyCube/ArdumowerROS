@@ -151,21 +151,39 @@ void Robot::raiseROSErrorEvent(byte errorType) {
   ROS2Console.println(errorType);
 }
 
+
 void Robot::readROSSerial() {
   String serialdata;
+  char ch;
+  int charcount = 0;
 
   if (ROS2Console.available() > 0) {
-    serialdata = waitStringConsole();
-    if (serialdata[0] == '$') {
-      ROSLastTimeMessage = millis();
-      processROSCommand(serialdata);
-      if (stateCurr != STATE_ROS)
-      {
-        setNextState(STATE_ROS);
+    while (ROS2Console.available() > 0 && charcount < 255 )
+    {
+      ch = ROS2Console.read(); // get the character
+      Console.println(ch);
+      serialdata += (char)ch;
+      charcount++;
+
+    }
+
+    if (charcount = 255)
+    {
+        ROS2Console.flush();
+        sendROSDebugInfo(ROS_ERROR, "invalid serial data");
+    }
+    
+    else {
+      if (serialdata[0] == '$') {
+        ROSLastTimeMessage = millis();
+        processROSCommand(serialdata);
+        if (stateCurr != STATE_ROS)
+        {
+          setNextState(STATE_ROS);
+        }
       }
     }
   }
-
 }
 
 void Robot::processROSCommand(String command) {
