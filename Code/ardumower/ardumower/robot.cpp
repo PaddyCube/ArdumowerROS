@@ -341,6 +341,7 @@ void Robot::setup()
   initROSSensorRates();
   raiseROSNewStateEvent(stateCurr); // ready for communication
   ROSLastTimeMessage = millis();
+  Console.println("Setup complete");
 }
 
 void Robot::checkButton()
@@ -1112,7 +1113,7 @@ void Robot::loop()
   if (millis() >= nextTimeInfo)
   {
     nextTimeInfo = millis() + 1000;
-
+Console.println("alive");
     // ROS send info for debugging
     ledState = ~ledState;
     //checkErrorCounter();

@@ -552,7 +552,7 @@ class Robot
     virtual void responseBumper();
     virtual void responseSonar();
     virtual void responseButton();
-    virtual void responseIMU();
+    virtual void responseIMU(); 
 
     // check sensor
     virtual void checkButton();
