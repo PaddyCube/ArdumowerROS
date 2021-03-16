@@ -22,7 +22,7 @@ If running on a ESP32, it simply reads and writes to uart of Ardumower and publi
 
 In any case, there is a ROS 2 node named "Ardumower driver", which process the uart data (either because it is attached directly or by subscribing to ardumower_uart_rx) and translate them to custom ROS 2 Ardumower messages. Some of these messages gets subscribed by a ROS 2 node called "base controller". Its task is currently translating some of the ardumower messages into common ROS 2 messages, like sensors_msgs and to do some tf transformations for odometry and IMU
 
-![alt text](https://github.com/[PaddyCube]/[ArdumowerROS]/blob/[Development]/Docs/ROS2_diagram.jpg?raw=true)
+![ROS2 schematics](https://github.com/PaddyCube/ArdumowerROS/blob/Development/Docs/ROS2_diagram.jpg)
 
 # Content of repository
 This repository contains (will contain) 
