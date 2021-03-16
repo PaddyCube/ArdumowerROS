@@ -96,75 +96,94 @@ void Robot::initROSSensorRates() {
 }
 
 void Robot::initROSSerial() {
-  Console.begin(CONSOLE_BAUDRATE);
+  ROS2Console.begin(ROS2_BAUDRATE);
+  ROS2Console.flush();
 }
 
 void Robot::sendROSDebugInfo(int type, char *message) {
   switch (type) {
     case ROS_DEBUG:
       if (ROSDebugVerbose) {
-        Console.print("$LD:");
-        Console.println(message);
+        ROS2Console.print("$LD:");
+        ROS2Console.println(message);
       }
       break;
     case ROS_INFO:
-      Console.print("$LI:");
-      Console.println(message);
+      ROS2Console.print("$LI:");
+      ROS2Console.println(message);
       break;
     case ROS_WARN:
-      Console.print("$LW:");
-      Console.println(message);
+      ROS2Console.print("$LW:");
+      ROS2Console.println(message);
       break;
     case ROS_ERROR:
-      Console.print("$LE:");
-      Console.println(message);
+      ROS2Console.print("$LE:");
+      ROS2Console.println(message);
       break;
     case ROS_FATAL:
-      Console.print("$LF:");
-      Console.println(message);
+      ROS2Console.print("$LF:");
+      ROS2Console.println(message);
       break;
   }
 }
 
 void Robot::raiseROSNewStateEvent(byte stateNew) {
-  Console.print(ROSCommandSet[EVENT]);
-  Console.print('|');
-  Console.print(ROS_EV_NEW_STATE);
-  Console.print('|');
-  Console.println(stateNew);
+  ROS2Console.print(ROSCommandSet[EVENT]);
+  ROS2Console.print('|');
+  ROS2Console.print(ROS_EV_NEW_STATE);
+  ROS2Console.print('|');
+  ROS2Console.println(stateNew);
 }
 
 void Robot::raiseROSSensorEvent(int sensorType) {
-  Console.print(ROSCommandSet[EVENT]);
-  Console.print('|');
-  Console.print(ROS_EV_SENSOR_TRIGGER);
-  Console.print('|');
-  Console.println(sensorType);
+  ROS2Console.print(ROSCommandSet[EVENT]);
+  ROS2Console.print('|');
+  ROS2Console.print(ROS_EV_SENSOR_TRIGGER);
+  ROS2Console.print('|');
+  ROS2Console.println(sensorType);
 }
 
 void Robot::raiseROSErrorEvent(byte errorType) {
-  Console.print(ROSCommandSet[EVENT]);
-  Console.print('|');
-  Console.print(ROS_EV_ERROR);
-  Console.print('|');
-  Console.println(errorType);
+  ROS2Console.print(ROSCommandSet[EVENT]);
+  ROS2Console.print('|');
+  ROS2Console.print(ROS_EV_ERROR);
+  ROS2Console.print('|');
+  ROS2Console.println(errorType);
 }
+
 
 void Robot::readROSSerial() {
   String serialdata;
+  char ch;
+  int charcount = 0;
 
-  if (Console.available() > 0) {
-    serialdata = waitStringConsole();
-    if (serialdata[0] == '$') {
-      ROSLastTimeMessage = millis();
-      processROSCommand(serialdata);
-      if (stateCurr != STATE_ROS)
-      {
-        setNextState(STATE_ROS);
+  if (ROS2Console.available() > 0) {
+    while (ROS2Console.available() > 0 && charcount < 255 )
+    {
+      ch = ROS2Console.read(); // get the character
+      Console.println(ch);
+      serialdata += (char)ch;
+      charcount++;
+
+    }
+
+    if (charcount = 255)
+    {
+        ROS2Console.flush();
+        sendROSDebugInfo(ROS_ERROR, "invalid serial data");
+    }
+    
+    else {
+      if (serialdata[0] == '$') {
+        ROSLastTimeMessage = millis();
+        processROSCommand(serialdata);
+        if (stateCurr != STATE_ROS)
+        {
+          setNextState(STATE_ROS);
+        }
       }
     }
   }
-
 }
 
 void Robot::processROSCommand(String command) {
@@ -279,192 +298,194 @@ void Robot::processROSCommand(String command) {
 
 void Robot::responseHeartBeat() {
   // prepare message
-  Console.print(ROSCommandSet[HEARTBEAT]);
-  Console.print('|');
-  Console.println(ROSlastMessageID);
+  ROS2Console.print(ROSCommandSet[HEARTBEAT]);
+  ROS2Console.print('|');
+  ROS2Console.println(ROSlastMessageID);
 }
 
 void Robot::responseStatus() {
-  Console.print(ROSCommandSet[RESPONSE]);
-  Console.print('|');
-  Console.print(ROSlastMessageID);
-  Console.print('|');
-  Console.print(SEN_STATUS);
-  Console.print('|');
-  Console.print(loopsPerSec);
-  Console.print('|');
-  Console.print(stateCurr);
-  Console.print('|');
-  Console.print(stateNames[stateCurr]);
-  Console.print('|');
-  Console.println("E000");
+  ROS2Console.print(ROSCommandSet[RESPONSE]);
+  ROS2Console.print('|');
+  ROS2Console.print(ROSlastMessageID);
+  ROS2Console.print('|');
+  ROS2Console.print(SEN_STATUS);
+  ROS2Console.print('|');
+  ROS2Console.print(loopsPerSec);
+  ROS2Console.print('|');
+  ROS2Console.print(stateCurr);
+  ROS2Console.print('|');
+  ROS2Console.print(stateNames[stateCurr]);
+  ROS2Console.print('|');
+  ROS2Console.println("E000");
 
 }
 
 void Robot::responseBattery() {
-  Console.print(ROSCommandSet[RESPONSE]);
-  Console.print('|');
-  Console.print(ROSlastMessageID);
-  Console.print('|');
-  Console.print(SEN_BAT_VOLTAGE);
-  Console.print('|');
-  Console.print(batVoltage);
-  Console.print('|');
-  Console.print(chgVoltage);
-  Console.print('|');
-  Console.println(chgCurrent);
+  ROS2Console.print(ROSCommandSet[RESPONSE]);
+  ROS2Console.print('|');
+  ROS2Console.print(ROSlastMessageID);
+  ROS2Console.print('|');
+  ROS2Console.print(SEN_BAT_VOLTAGE);
+  ROS2Console.print('|');
+  ROS2Console.print(batVoltage);
+  ROS2Console.print('|');
+  ROS2Console.print(chgVoltage);
+  ROS2Console.print('|');
+  ROS2Console.println(chgCurrent);
 }
 
 void Robot::responsePerimeter() {
-  Console.print(ROSCommandSet[RESPONSE]);
-  Console.print('|');
-  Console.print(ROSlastMessageID);
-  Console.print('|');
-  Console.print(SEN_PERIM_LEFT);
-  Console.print('|');
-  Console.print(perimeterLeftInside);
-  Console.print('|');
-  Console.print(perimeterRightInside);
-  Console.print('|');
-  Console.print(perimeterLeftMag);
-  Console.print('|');
-  Console.print(perimeterRightMag);
-  Console.print('|');
-  Console.print(perimeterLastTransitionTime);
-  Console.print('|');
-  Console.print(perimeter.signalTimedOut(0));
-  Console.print('|');
-  Console.println(perimeter.signalTimedOut(1));
+  ROS2Console.print(ROSCommandSet[RESPONSE]);
+  ROS2Console.print('|');
+  ROS2Console.print(ROSlastMessageID);
+  ROS2Console.print('|');
+  ROS2Console.print(SEN_PERIM_LEFT);
+  ROS2Console.print('|');
+  ROS2Console.print(perimeterLeftInside);
+  ROS2Console.print('|');
+  ROS2Console.print(perimeterRightInside);
+  ROS2Console.print('|');
+  ROS2Console.print(perimeterLeftMag);
+  ROS2Console.print('|');
+  ROS2Console.print(perimeterRightMag);
+  ROS2Console.print('|');
+  ROS2Console.print(perimeterLastTransitionTime);
+  ROS2Console.print('|');
+  ROS2Console.print(perimeter.signalTimedOut(0));
+  ROS2Console.print('|');
+  ROS2Console.println(perimeter.signalTimedOut(1));
 }
 
 void Robot::responseMotor() {
-  Console.print(ROSCommandSet[RESPONSE]);
-  Console.print('|');
-  Console.print(ROSlastMessageID);
-  Console.print('|');
-  Console.print(SEN_MOTOR_LEFT);
-  Console.print('|');
-  Console.print(motorLeftPWMCurr);
-  Console.print('|');
-  Console.print(motorRightPWMCurr);
-  Console.print('|');
-  Console.print(motorLeftSense);  // Power usage in W
-  Console.print('|');
-  Console.print(motorRightSense);
-  Console.print('|');
-  Console.print(motorLeftSenseCurrent); // Current in mA
-  Console.print('|');
-  Console.print(motorRightSenseCurrent);
-  Console.print('|');
-  Console.print(motorLeftSenseCounter);  // overload counters
-  Console.print('|');
-  Console.print(motorRightSenseCounter);
-  Console.print('|');
-  Console.print(motorMowEnable); // mow motor enable
-  Console.print('|');
-  Console.print(motorMowSense);  // Power in W
-  Console.print('|');
-  Console.print(motorMowSenseCurrent); // current in mA
-  Console.print('|');
-  Console.println(motorMowSenseCounter); // overload counter
+  ROS2Console.print(ROSCommandSet[RESPONSE]);
+  ROS2Console.print('|');
+  ROS2Console.print(ROSlastMessageID);
+  ROS2Console.print('|');
+  ROS2Console.print(SEN_MOTOR_LEFT);
+  ROS2Console.print('|');
+  ROS2Console.print(motorLeftPWMCurr);
+  ROS2Console.print('|');
+  ROS2Console.print(motorRightPWMCurr);
+  ROS2Console.print('|');
+  ROS2Console.print(motorLeftSense);  // Power usage in W
+  ROS2Console.print('|');
+  ROS2Console.print(motorRightSense);
+  ROS2Console.print('|');
+  ROS2Console.print(motorLeftSenseCurrent); // Current in mA
+  ROS2Console.print('|');
+  ROS2Console.print(motorRightSenseCurrent);
+  ROS2Console.print('|');
+  ROS2Console.print(motorLeftSenseCounter);  // overload counters
+  ROS2Console.print('|');
+  ROS2Console.print(motorRightSenseCounter);
+  ROS2Console.print('|');
+  ROS2Console.print(motorMowEnable); // mow motor enable
+  ROS2Console.print('|');
+  ROS2Console.print(motorMowSense);  // Power in W
+  ROS2Console.print('|');
+  ROS2Console.print(motorMowSenseCurrent); // current in mA
+  ROS2Console.print('|');
+  ROS2Console.println(motorMowSenseCounter); // overload counter
 
 }
 
 void Robot::responseOdometry() {
-  Console.print(ROSCommandSet[RESPONSE]);
-  Console.print('|');
-  Console.print(ROSlastMessageID);
-  Console.print('|');
-  Console.print(SEN_ODOM);
-  Console.print('|');
-  Console.print(odometryLeft);
-  Console.print('|');
-  Console.println(odometryRight);
+  ROS2Console.print(ROSCommandSet[RESPONSE]);
+  ROS2Console.print('|');
+  ROS2Console.print(ROSlastMessageID);
+  ROS2Console.print('|');
+  ROS2Console.print(SEN_ODOM);
+  ROS2Console.print('|');
+  ROS2Console.print(odometryLeft);
+  ROS2Console.print('|');
+  ROS2Console.println(odometryRight);
 }
 
 void Robot::responseBumper() {
-  Console.print(ROSCommandSet[RESPONSE]);
-  Console.print('|');
-  Console.print(ROSlastMessageID);
-  Console.print('|');
-  Console.print(SEN_BUMPER_LEFT);
-  Console.print('|');
-  Console.print(bumperLeftCounter);
-  Console.print('|');
-  Console.print(bumperRightCounter);
-  Console.print('|');
-  Console.print(bumperLeft);
-  Console.print('|');
-  Console.println(bumperRight);
+  ROS2Console.print(ROSCommandSet[RESPONSE]);
+  ROS2Console.print('|');
+  ROS2Console.print(ROSlastMessageID);
+  ROS2Console.print('|');
+  ROS2Console.print(SEN_BUMPER_LEFT);
+  ROS2Console.print('|');
+  ROS2Console.print(bumperLeftCounter);
+  ROS2Console.print('|');
+  ROS2Console.print(bumperRightCounter);
+  ROS2Console.print('|');
+  ROS2Console.print(bumperLeft);
+  ROS2Console.print('|');
+  ROS2Console.println(bumperRight);
 }
 
 void Robot::responseSonar() {
-  Console.print(ROSCommandSet[RESPONSE]);
-  Console.print('|');
-  Console.print(ROSlastMessageID);
-  Console.print('|');
-  Console.print(SEN_SONAR_CENTER);
-  Console.print('|');
-  Console.print(sonarDistLeft);
-  Console.print('|');
-  Console.print(sonarDistCenter);
-  Console.print('|');
-  Console.print(sonarDistRight);
-  Console.print('|');
-  Console.println(sonarDistCounter);
+  ROS2Console.print(ROSCommandSet[RESPONSE]);
+  ROS2Console.print('|');
+  ROS2Console.print(ROSlastMessageID);
+  ROS2Console.print('|');
+  ROS2Console.print(SEN_SONAR_CENTER);
+  ROS2Console.print('|');
+  ROS2Console.print(sonarDistLeft);
+  ROS2Console.print('|');
+  ROS2Console.print(sonarDistCenter);
+  ROS2Console.print('|');
+  ROS2Console.print(sonarDistRight);
+  ROS2Console.print('|');
+  ROS2Console.println(sonarDistCounter);
 }
 
 void Robot::responseButton() {
-  Console.print(ROSCommandSet[RESPONSE]);
-  Console.print('|');
-  Console.print(ROSlastMessageID);
-  Console.print('|');
-  Console.print(SEN_BUTTON);
-  Console.print('|');
-  Console.println(buttonCounter);
+  ROS2Console.print(ROSCommandSet[RESPONSE]);
+  ROS2Console.print('|');
+  ROS2Console.print(ROSlastMessageID);
+  ROS2Console.print('|');
+  ROS2Console.print(SEN_BUTTON);
+  ROS2Console.print('|');
+  ROS2Console.println(buttonCounter);
   buttonCounter = 0;
 }
 
 void Robot::responseIMU() {
-  Console.print(ROSCommandSet[RESPONSE]);
-  Console.print('|');
-  Console.print(ROSlastMessageID);
-  Console.print('|');
-  Console.print(SEN_IMU);
-  Console.print('|');
-  Console.print(imu.ypr.yaw / PI * 180);
-  Console.print('|');
-  Console.print(imu.ypr.pitch / PI * 180);
-  Console.print('|');
-  Console.print(imu.ypr.roll / PI * 180);
-  Console.print('|');
-  Console.print(imu.gyro.x / PI * 180);
-  Console.print('|');
-  Console.print(imu.gyro.y / PI * 180);
-  Console.print('|');
-  Console.print(imu.gyro.z / PI * 180);
-  Console.print('|');
-  Console.print(imu.acc.x);
-  Console.print('|');
-  Console.print(imu.acc.y);
-  Console.print('|');
-  Console.print(imu.acc.z);
-  Console.print('|');
-  Console.print(imu.com.x);
-  Console.print('|');
-  Console.println(imu.com.y);
+  ROS2Console.print(ROSCommandSet[RESPONSE]);
+  ROS2Console.print('|');
+  ROS2Console.print(ROSlastMessageID);
+  ROS2Console.print('|');
+  ROS2Console.print(SEN_IMU);
+  ROS2Console.print('|');
+  ROS2Console.print(imu.ypr.yaw / PI * 180);
+  ROS2Console.print('|');
+  ROS2Console.print(imu.ypr.pitch / PI * 180);
+  ROS2Console.print('|');
+  ROS2Console.print(imu.ypr.roll / PI * 180);
+  ROS2Console.print('|');
+  ROS2Console.print(imu.gyro.x / PI * 180);
+  ROS2Console.print('|');
+  ROS2Console.print(imu.gyro.y / PI * 180);
+  ROS2Console.print('|');
+  ROS2Console.print(imu.gyro.z / PI * 180);
+  ROS2Console.print('|');
+  ROS2Console.print(imu.acc.x);
+  ROS2Console.print('|');
+  ROS2Console.print(imu.acc.y);
+  ROS2Console.print('|');
+  ROS2Console.print(imu.acc.z);
+  ROS2Console.print('|');
+  ROS2Console.print(imu.com.x);
+  ROS2Console.print('|');
+  ROS2Console.print(imu.com.y);
+  ROS2Console.print('|');
+  ROS2Console.println(imu.com.z);
 }
 
 void Robot::responseMotorCommand() {
-  Console.print(ROSCommandSet[MOTORRESPONSE]);
-  Console.print('|');
-  Console.print(ROSlastMessageID);
-  Console.print('|');
-  Console.print(motorLeftPWMCurr);
-  Console.print('|');
-  Console.print(motorRightPWMCurr);
-  Console.print('|');
-  Console.println(motorMowEnable);
+  ROS2Console.print(ROSCommandSet[MOTORRESPONSE]);
+  ROS2Console.print('|');
+  ROS2Console.print(ROSlastMessageID);
+  ROS2Console.print('|');
+  ROS2Console.print(motorLeftPWMCurr);
+  ROS2Console.print('|');
+  ROS2Console.print(motorRightPWMCurr);
+  ROS2Console.print('|');
+  ROS2Console.println(motorMowEnable);
 }
 
 void Robot::processMotorCommand(String pwmLeftStr, String pwmRightStr, String mowStr)

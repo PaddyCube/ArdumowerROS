@@ -1,0 +1,7 @@
+
+int32 left_pwm
+int32 right_pwm
+
+#Mow motor state
+bool mow_enable
+---

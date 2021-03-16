@@ -336,9 +336,12 @@ void Robot::setup()
   //resetIdleTime();
 
   Console.println("Init ROSSerial");
+  initROSSerial(); // start serial console
+  sendROSDebugInfo(ROS_DEBUG, "SETUP");
   initROSSensorRates();
   raiseROSNewStateEvent(stateCurr); // ready for communication
   ROSLastTimeMessage = millis();
+  Console.println("Setup complete");
 }
 
 void Robot::checkButton()
@@ -1076,7 +1079,7 @@ void Robot::loop()
   int steer;
   ADCMan.run();
 
-  // ROS no read of serial console in loop, only setup
+  readSerial();
   readROSSerial();
   rc.readSerial();
   //resetIdleTime();
@@ -1110,7 +1113,7 @@ void Robot::loop()
   if (millis() >= nextTimeInfo)
   {
     nextTimeInfo = millis() + 1000;
-
+Console.println("alive");
     // ROS send info for debugging
     ledState = ~ledState;
     //checkErrorCounter();
@@ -1233,19 +1236,6 @@ case STATE_ROS:
         if (chgVoltage < 5 && (millis() - stateStartTime > 2000)) setNextState(STATE_OFF);
       }
       break;
-      //  case STATE_REMOTE:
-      //    // remote control mode (RC)
-      //    //if (remoteSwitch > 50) setNextState(STATE_FORWARD, 0);
-      //    steer = ((double)motorSpeedMaxRpm / 2) * (((double)remoteSteer) / 100.0);
-      //    if (remoteSpeed < 0)
-      //      steer *= -1;
-      //    motorLeftSpeedRpmSet = ((double)motorSpeedMaxRpm) * (((double)remoteSpeed) / 100.0) - steer;
-      //    motorRightSpeedRpmSet = ((double)motorSpeedMaxRpm) * (((double)remoteSpeed) / 100.0) + steer;
-      //    motorLeftSpeedRpmSet = max(-motorSpeedMaxRpm, min(motorSpeedMaxRpm, motorLeftSpeedRpmSet));
-      //    motorRightSpeedRpmSet = max(-motorSpeedMaxRpm, min(motorSpeedMaxRpm, motorRightSpeedRpmSet));
-      //    motorMowSpeedPWMSet = ((double)motorMowSpeedMaxPwm) * (((double)remoteMow) / 100.0);
-      //    break;
-
 
   } // end switch
 

@@ -131,8 +131,6 @@ void Robot::loadSaveUserSettings(boolean readflag){
   eereadwrite(readflag, addr, dropUse);   
   eereadwrite(readflag, addr, statsOverride);   
   eereadwrite(readflag, addr, bluetoothUse);
-  eereadwrite(readflag, addr, esp8266Use);
-  eereadwriteString(readflag, addr, esp8266ConfigString);
   eereadwrite(readflag, addr, tiltUse);
   eereadwrite(readflag, addr, sonarSlowBelow);
 	eereadwrite(readflag, addr, motorMowForceOff);	
@@ -442,13 +440,6 @@ void Robot::printSettingSerial(){
   Console.println(F("---------- bluetooth-----------------------------------------"));
   Console.print  (F("bluetoothuse                               : "));
   Console.println(bluetoothUse,1); 
-
-// ----- esp8266 -----------------------------------------------------------------
-  Console.println(F("---------- esp8266 ------------------------------------------"));
-  Console.print  (F("esp8266Use                                 : "));
-  Console.println(esp8266Use,1); 
-  Console.print  (F("esp8266ConfigString                        : "));
-  Console.println(esp8266ConfigString); 
 
 // -------robot stats--------------------------------------------------------------
   Console.println(F("---------- robot stats ---------------------------------------"));

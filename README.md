@@ -1,5 +1,6 @@
 # ArdumowerROS
-ROS based implementation of Ardumower DIY lawn mower
+ROS 2 based implementation of Ardumower DIY lawn mower
+
 
 # Idea
 After many years of running my Ardumower with Arduino (Ardumower Azurit) firmware, I wanted to try and learn something new. 

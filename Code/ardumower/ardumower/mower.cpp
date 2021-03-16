@@ -195,10 +195,6 @@ Mower::Mower(){
   // ----- bluetooth -------------------------------------
   bluetoothUse               = 1;          // use Bluetooth module?  (WARNING: if enabled, you cannot use ESP8266)
 
-  // ----- esp8266 ---------------------------------------
-  esp8266Use                 = 0;          // use ESP8266 Wifi module? (WARNING: if enabled, you cannot use Bluetooth)
-  esp8266ConfigString        = "123test321";
-
   // ------ mower stats-------------------------------------------  
   statsOverride              = false;      // if set to true mower stats are overwritten - be careful
   statsMowTimeMinutesTotal   = 300;
@@ -297,7 +293,7 @@ void Mower::setup(){
   digitalWrite(pinBatterySwitch, HIGH);
 
   Buzzer.begin();
-	//Console.begin(CONSOLE_BAUDRATE);  
+	Console.begin(CONSOLE_BAUDRATE);  
 	I2Creset();	
   Wire.begin();            			
   unsigned long timeout = millis() + 10000;
@@ -425,14 +421,7 @@ void Mower::setup(){
 
   Robot::setup();  
 
-  if (esp8266Use) {
-  //  Console.println(F("Sending ESP8266 Config"));
-    ESP8266port.begin(ESP8266_BAUDRATE);
-    ESP8266port.println(esp8266ConfigString);
-    ESP8266port.flush();
-    ESP8266port.end();
-    rc.initSerial(&ESP8266port, ESP8266_BAUDRATE);
-  } else if (bluetoothUse) {
+if (bluetoothUse) {
     rc.initSerial(&Bluetooth, BLUETOOTH_BAUDRATE);
   }
 
