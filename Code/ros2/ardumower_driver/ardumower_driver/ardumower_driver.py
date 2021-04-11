@@ -15,11 +15,16 @@ from datetime import datetime
 from datetime import timedelta
 from ardumower_msgs import msg
 from ardumower_msgs import srv
+from std_msgs.msg import String
 
 DEBUG = True
 
 
 class ArdumowerROSDriver(Node):
+    
+   # connection types
+   CONNECT_SERIAL, CONNECT_UART, CONNECT_MSG = range(0,3)
+   
    # all types of ROS sensor messages
    SEN_STATUS, SEN_PERIM_LEFT, SEN_PERIM_RIGHT, SEN_LAWN_FRONT, SEN_LAWN_BACK, \
    SEN_BAT_VOLTAGE, SEN_CHG_CURRENT, SEN_CHG_VOLTAGE, \
@@ -52,15 +57,22 @@ class ArdumowerROSDriver(Node):
                 ("port", None),
                 ("timeout", None),
                 ("baudrate", None),
+                ("connection_type", None),
                 ("max_velocity", None),
                 ("wheel_diameter", None),
                 ("encoder_resolution", None),
                 ("gear_reduction", None),
             ])
         
-        self.port = self.get_parameter("port").get_parameter_value().string_value
-        print(self.port)
-        self.baudrate = self.get_parameter("baudrate").get_parameter_value().integer_value
+        self.connection_type = self.get_parameter("connection_type").get_parameter_value().integer_value
+        print(self.connection_type)
+        if self.connection_type == self.CONNECT_SERIAL:
+            
+            self.port = self.get_parameter("port").get_parameter_value().string_value
+            print(self.port)
+            self.baudrate = self.get_parameter("baudrate").get_parameter_value().integer_value
+            
+        
         self.timeout = self.get_parameter("timeout").get_parameter_value().double_value
         self.max_velocity = self.get_parameter("max_velocity").get_parameter_value().double_value
         self.encoder_resolution = self.get_parameter("encoder_resolution").get_parameter_value().integer_value
@@ -89,6 +101,10 @@ class ArdumowerROSDriver(Node):
             msg.Odometry, "ardumower_odometry", 100)
         self.pubIMU = self.create_publisher(msg.Imu, "ardumower_imu", 10)
 
+        #subscribers
+        self.subArdumowerUart = self.create_subscription(String, "/ardumower_uart", self.UartCallback,10)
+        
+        # service definitions
         self.setMotorSrv = self.create_service(srv.SetMotor, "ardumower_driver/SetMotor", self.MotorCallback)
         # define mow motor status here
         self.mowMotorEnable = False
@@ -109,6 +125,9 @@ class ArdumowerROSDriver(Node):
 
     # Method to connect to serial console of Arduino
    def connect(self):
+        if self.connection_type != self.CONNECT_SERIAL:
+            return
+        
         print("Connecting to Arduino on port", self.port,
               " with baud rate ", self.baudrate, "...")
         self.port = serial.Serial(
@@ -122,6 +141,9 @@ class ArdumowerROSDriver(Node):
    # analyze kind of message and call corresponding method for further processing
    # check if any message needs to be send to Arduino and trigger command send
    def pollSerial(self):
+       if self.connection_type != self.CONNECT_SERIAL:
+           return
+       
        while self.port.inWaiting() > 0:
           line = self.port.readline().decode('utf-8')
           if DEBUG:
@@ -135,6 +157,21 @@ class ArdumowerROSDriver(Node):
                    self.processResponseMessage(line)
                elif line.startswith('$EV'):
                    self.processEventMessage(line)
+
+   def UartCallback(self, req):
+       if self.connection_type != self.CONNECT_MSG:
+           return
+       if DEBUG:
+           print(req.data)
+          # Check for incoming ROS messages
+       if req.data.startswith('$'):
+           # check for command type
+           if req.data.startswith('$LD') or req.data.startswith('$LI') or req.data.startswith('$LW') or req.data.startswith('$LE') or req.data.startswith('$LF'):
+               self.processInfoMessage(req.data)
+           elif req.data.startswith('$RS'):
+               self.processResponseMessage(req.data)
+           elif req.data.startswith('$EV'):
+               self.processEventMessage(req.data)
 
    # Method process Info messages from Arduino into corresponding
    # ROS Log message
@@ -214,12 +251,12 @@ class ArdumowerROSDriver(Node):
                msgPeriRight = msg.Perimeter()
                msgPeri = msg.Perimeters()
                msgPeri.header.stamp = self.get_clock().now().to_msg()
-               msgPeriLeft.inside = bool(items[3])
-               msgPeriRight.inside = bool(items[4])
+               msgPeriLeft.inside = items[3] in ('1') # convert string to boolean
+               msgPeriRight.inside = items[4] in ('1')
                msgPeriLeft.magnitude = int(items[5])
                msgPeriRight.magnitude = int(items[6])
-               msgPeriLeft.signal_timeout = bool(items[8])
-               msgPeriRight.signal_timeout = bool(items[9])
+               msgPeriLeft.signal_timeout = items[8] in ('1')
+               msgPeriRight.signal_timeout = items[9] in ('1')
 
                msgPeri.data.append(msgPeriLeft)
                msgPeri.data.append(msgPeriRight)
@@ -328,22 +365,19 @@ class ArdumowerROSDriver(Node):
    # Method to poll a sensor
    # Create command for request string and send it by serial console to Arduino
    def pollSensor(self, sensorID):
+       if self.connection_type != self.CONNECT_SERIAL:
+           return
+       
        self.ROSMessageID+=1
        cmd = '$RQ|' + str(self.ROSMessageID) + '|' + str(sensorID)+ '\r\n'
        self.port.write(cmd.encode('utf-8'))
 
    def close(self):
+        if self.connection_type != self.CONNECT_SERIAL:
+            return
         print("disconnect from serial port")
         self.port.close()
 
-# only needed if direct started as basic test
-   def timer_callback(self):
-
-       self.pollSerial()
-       # check for timeout
-       if self.get_clock().now() - self.timeLastROSCommand  > Duration(seconds= self.timeoutROSMessage, nanoseconds= 0):
-           self.get_logger().fatal("Message timeout, no messages from Ardumower received")
-   
    def MotorCallback(self, req, resp):
        leftpwm = int(float(req.left_pwm / self.max_ticks) * 255)
        rightpwm = int (float(req.right_pwm / self.max_ticks) * 255 )
@@ -371,6 +405,14 @@ class ArdumowerROSDriver(Node):
        self.setMotors(leftpwm, rightpwm, req.mow_enable)
        return resp
 
+# only needed if direct started as basic test
+   def timer_callback(self):
+
+       self.pollSerial()
+       # check for timeout
+       if self.get_clock().now() - self.timeLastROSCommand  > Duration(seconds= self.timeoutROSMessage, nanoseconds= 0):
+           self.get_logger().fatal("Message timeout, no messages from Ardumower received")
+   
 
 def main(args=None):
     rclpy.init(args=args)

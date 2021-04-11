@@ -68,9 +68,9 @@ void uart_task(void *arg)
 				else
 				{
 					len = uart_read_bytes(UART_PORT_NUM, data, pos, 100 / portTICK_PERIOD_MS);
-					data[len] = '\0';
+					data[len-1] = '\0';
 					//ESP_LOGI(TAG, "data: %s", data);
-					xQueueSendFromISR(inboundMessageQueue, data, NULL);
+					xQueueSendFromISR(inboundMessageQueue, data+1, NULL);
 					//xQueueSend(inboundMessageQueue, data, (TickType_t)0);
 				}
 			}

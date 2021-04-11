@@ -13,13 +13,14 @@ extern "C"
 #include <uros_network_interfaces.h>
 #include <rcl/rcl.h>
 #include <rcl/error_handling.h>
-#include <std_msgs/msg/int32.h>
 #include <std_msgs/msg/string.h>
-#include <rcl_interfaces/msg/log.h>
+//#include <rcl_interfaces/msg/log.h>
 #include <rclc/rclc.h>
 #include <rclc/executor.h>
 #include <rmw_uros/options.h>
 #include "uxr/client/config.h"
+
+
 }
 
 #include "driver/gpio.h"
@@ -42,6 +43,7 @@ QueueHandle_t inboundMessageQueue = NULL;
 		if ((temp_rc != RCL_RET_OK))                                                     \
 		{                                                                                \
 			printf("Failed status on line %d: %d. Aborting.\n", __LINE__, (int)temp_rc); \
+			vTaskDelete(NULL);															 \
 		}                                                                                \
 	}
 #define RCSOFTCHECK(fn)                                                                    \
@@ -53,27 +55,38 @@ QueueHandle_t inboundMessageQueue = NULL;
 		}                                                                                  \
 	}
 
-rcl_publisher_t publisher_int32;
 rcl_publisher_t publisher_string;
-rcl_publisher_t publisher_log;
-std_msgs__msg__Int32 msgInt;
+//rcl_publisher_t publisher_log;
+
+
 std_msgs__msg__String msgStr;
-rcl_interfaces__msg__Log msgLog;
+//rcl_interfaces__msg__Log msgLog;
+
 
 void timer_callback(rcl_timer_t *timer, int64_t last_call_time)
 {
 	RCLC_UNUSED(last_call_time);
 	if (timer != NULL)
 	{
-		RCSOFTCHECK(rcl_publish(&publisher_int32, &msgInt, NULL));
-		msgInt.data = msgInt.data + 5;
+		// RCSOFTCHECK(rcl_publish(&publisher_int32, &msgInt, NULL));
+		// msgInt.data = msgInt.data + 5;
+			 
+		//   msgLog.level = rcl_interfaces__msg__Log__INFO;
+		//   msgLog.name.data = "ESP32";
+		//   msgLog.name.size = strlen(msgLog.name.data);
+		//   msgLog.msg.data = "Hello world";
+		//   msgLog.msg.size = strlen(msgLog.msg.data);
+		//   msgLog.file.data = "";
+		//   msgLog.file.size = strlen(msgLog.file.data);
+		//   msgLog.function.data = "";
+		//   msgLog.function.size = strlen(msgLog.function.data);
+		//   msgLog.line = NULL;
+		//   RCSOFTCHECK(rcl_publish(&publisher_log, &msgLog, NULL));
 
-		// msgLog.level = rcl_interfaces__msg__Log__INFO;
-		// msgLog.name.data = (char *)"ESP32 ";
-		// msgLog.name.size = strlen(msgLog.name.data);
-		// msgLog.msg.data = (char *)"Hello World";
-		// msgLog.msg.size = strlen(msgLog.msg.data);
-		// RCSOFTCHECK(rcl_publish(&publisher_log, &msgLog, NULL));
+		// msgBattery.voltage = 25.0;
+		// msgBattery.charge_voltage = 0.0;
+		// msgBattery.charge_current = 0.0;
+		// RCSOFTCHECK(rcl_publish(&publisher_battery, &msgBattery, NULL));
 	}
 }
 
@@ -113,14 +126,7 @@ void micro_ros_task(void *arg)
 
 	// create node
 	rcl_node_t node;
-	RCCHECK(rclc_node_init_default(&node, "esp32_int32_publisher", "", &support));
-
-	// create publisher
-	RCCHECK(rclc_publisher_init_default(
-		&publisher_int32,
-		&node,
-		ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32),
-		"freertos_int32_publisher"));
+	RCCHECK(rclc_node_init_default(&node, "ardumower_uart", "", &support));
 
 	// create publisher
 	RCCHECK(rclc_publisher_init_default(
@@ -129,15 +135,22 @@ void micro_ros_task(void *arg)
 		ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, String),
 		"ardumower_uart"));
 
+	// create battery publisher
+	// RCCHECK(rclc_publisher_init_default(
+	// 	&publisher_string,
+	// 	&node,
+	// 	ROSIDL_GET_MSG_TYPE_SUPPORT(ardumower_msgs, msg, Battery),
+	// 	"ardumower_battery"));
+
 	// // create publisher
-	 RCCHECK(rclc_publisher_init_default(
-	 	&publisher_log,
-	 	&node,
-	 	ROSIDL_GET_MSG_TYPE_SUPPORT(rcl_interfaces, msg, Log),
-	 	"rosout"));
+	//   RCCHECK(rclc_publisher_init_default(
+	//   	&publisher_log,
+	//   	&node,
+	//   	ROSIDL_GET_MSG_TYPE_SUPPORT(rcl_interfaces, msg, Log),
+	//   	"rosout"));
 		 
-		 ESP_LOGW(TAG, "Error: %s", rcutils_get_error_string().str);
-		 rcl_reset_error();
+	// 	 ESP_LOGW(TAG, "Error: %s", rcutils_get_error_string().str);
+	// 	 rcl_reset_error();
 
 	// create timer,
 	rcl_timer_t timer;
@@ -153,7 +166,7 @@ void micro_ros_task(void *arg)
 	RCCHECK(rclc_executor_init(&executor, &support.context, 1, &allocator));
 	RCCHECK(rclc_executor_add_timer(&executor, &timer));
 
-	msgInt.data = 0;
+	//msgInt.data = 0;
 	uint8_t *data = (uint8_t *)malloc(BUF_SIZE);
 	while (1)
 	{
@@ -163,10 +176,8 @@ void micro_ros_task(void *arg)
 			if (xQueueReceive(inboundMessageQueue, data, (TickType_t)(10)) == pdPASS)
 			{
 				//ESP_LOGI(TAG, "data avaialble");
-				ESP_LOGI(TAG, "ros2: %s", data);
+				//ESP_LOGI(TAG, "ros2: %s", data);
 				msgStr.data.data = (char *)data;
-				//msgStr.data.size = BUF_SIZE;
-				//msgStr.data.data = "Hello from micro-ROS ";
 				msgStr.data.size = strlen(msgStr.data.data);
 				RCSOFTCHECK(rcl_publish(&publisher_string, &msgStr, NULL));
 			}
@@ -176,9 +187,9 @@ void micro_ros_task(void *arg)
 		//usleep(10000);
 	}
 	// free resources
-	RCCHECK(rcl_publisher_fini(&publisher_int32, &node));
+	//RCCHECK(rcl_publisher_fini(&publisher_int32, &node));
 	RCCHECK(rcl_publisher_fini(&publisher_string, &node));
-	RCCHECK(rcl_publisher_fini(&publisher_log, &node));
+	//RCCHECK(rcl_publisher_fini(&publisher_log, &node));
 	RCCHECK(rcl_node_fini(&node));
 
 	vTaskDelete(NULL);
