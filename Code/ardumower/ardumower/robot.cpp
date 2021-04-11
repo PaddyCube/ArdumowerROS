@@ -323,6 +323,9 @@ void Robot::setup()
 
   Console.println(F("press..."));
   Console.println(F("  d main menu"));
+  Console.println(F("  h drive home"));
+  Console.println(F("  0 stop"));
+  Console.println(F("  p track perimeter"));
   Console.println(F("  l simulate left bumper"));
   Console.println(F("  r simulate right bumper"));
   Console.println();
@@ -480,11 +483,13 @@ void Robot::readSensors()
     if (perimeter.signalTimedOut(0) || perimeter.signalTimedOut(1))
     {
       if ( (stateCurr != STATE_OFF) && (stateCurr != STATE_STATION)
-           && (stateCurr != STATE_STATION_CHARGING) )
-      {
-        sendROSDebugInfo(ROS_FATAL, "perimeter too far away");
-        addErrorCounter(ERR_PERIMETER_TIMEOUT);
-        setNextState(STATE_ERROR);
+           && (stateCurr != STATE_STATION_CHARGING) && (stateCurr != STATE_PERI_TRACK)) {
+
+        {
+          sendROSDebugInfo(ROS_FATAL, "perimeter too far away");
+          addErrorCounter(ERR_PERIMETER_TIMEOUT);
+          setNextState(STATE_ERROR);
+        }
       }
     }
   }
@@ -900,6 +905,36 @@ void Robot::checkCurrent()
 //  }
 //}
 
+// check bumpers while tracking perimeter
+void Robot::checkBumpersPerimeter(){
+  if (!bumperUse) return;
+  if ((bumperLeft || bumperRight)) {    
+    if ((bumperLeft) || (stateCurr == STATE_PERI_TRACK)) {
+      setNextState(STATE_PERI_REV);          
+    } else {
+      setNextState(STATE_PERI_REV);
+    }
+  }
+}
+
+// check perimeter while finding it
+void Robot::checkPerimeterFind(){
+  if (!perimeterUse) return;
+  if (stateCurr == STATE_PERI_FIND){
+    if (perimeterLeftInside) {
+      // inside
+      if (motorLeftSpeedRpmSet != motorRightSpeedRpmSet){      
+        // we just made an 'outside=>inside' rotation, now track
+        setNextState(STATE_PERI_TRACK);    
+      }
+    } else {
+      // we are outside, now roll to get inside
+      motorRightSpeedRpmSet = -motorSpeedMaxRpm / 1.5;
+      motorLeftSpeedRpmSet  = motorSpeedMaxRpm / 1.5;
+    }
+  }
+}
+
 // check sonar
 void Robot::checkSonar()
 {
@@ -1033,6 +1068,18 @@ const char *Robot::stateName()
 
 void Robot::setNextState(byte stateNew) {
 
+  unsigned long stateTime = millis() - stateStartTime;
+  if (stateNew == stateCurr) return;
+
+  if ((stateNew == STATE_ERROR) && (stateCurr == STATE_STATION_CHARGING)) {
+    stateNew = STATE_STATION_CHARGING; // do not enter ERROR state when charging
+  }
+
+  if ((stateCurr == STATE_PERI_FIND) || (stateCurr == STATE_PERI_TRACK)) {
+    if (stateNew == STATE_ROLL) stateNew = STATE_PERI_ROLL;
+    if (stateNew == STATE_REVERSE) stateNew = STATE_PERI_REV;
+  }
+
   if (stateCurr == STATE_STATION_CHARGING) {
     // always switch off charging relay if leaving state STATE_STATION_CHARGING
     setActuator(ACT_CHGRELAY, 0);
@@ -1063,6 +1110,20 @@ void Robot::setNextState(byte stateNew) {
     statsMowTimeTotalStart = false;
     //loadSaveRobotStats(false);
   }
+
+  if (stateNew == STATE_PERI_FIND) {
+    // find perimeter  => drive half speed
+    motorLeftSpeedRpmSet = motorRightSpeedRpmSet = motorSpeedMaxRpm / 1.5;
+    //motorMowEnable = false;     // FIXME: should be an option?
+  }
+  if (stateNew == STATE_PERI_TRACK) {
+    //motorMowEnable = false;     // FIXME: should be an option?
+    perimeterLeftMagMaxValue = perimeterLeftMagMedian.getHighest();
+    setActuator(ACT_CHGRELAY, 0);
+    perimeterPID.reset();
+    //beep(6);
+  }
+
   // Inform ROS about new state
   raiseROSNewStateEvent(stateNew);
   stateCurr = stateNew;
@@ -1102,7 +1163,7 @@ void Robot::loop()
     processGPSData();
   }
 
-    spinOnce();
+  spinOnce();
 
   if (millis() >= nextTimePfodLoop)
   {
@@ -1113,7 +1174,7 @@ void Robot::loop()
   if (millis() >= nextTimeInfo)
   {
     nextTimeInfo = millis() + 1000;
-Console.println("alive");
+    Console.println("alive");
     // ROS send info for debugging
     ledState = ~ledState;
     //checkErrorCounter();
@@ -1177,7 +1238,7 @@ Console.println("alive");
         beep(1, true);
       }
 
-// ROS REMOVE ME LATER FOR SAFETY REASON
+      // ROS REMOVE ME LATER FOR SAFETY REASON
       if (chgVoltage > 5.0)
       {
         beep(2, true);
@@ -1201,7 +1262,7 @@ Console.println("alive");
       imuDriveHeading = imu.ypr.yaw;
       break;
 
-case STATE_ROS:
+    case STATE_ROS:
       if (batMonitor && (millis() - stateStartTime > 2000))
       {
         if (chgVoltage > 5.0)
@@ -1234,6 +1295,36 @@ case STATE_ROS:
           setNextState(STATE_ERROR);
         }
         if (chgVoltage < 5 && (millis() - stateStartTime > 2000)) setNextState(STATE_OFF);
+      }
+      break;
+
+    case STATE_PERI_ROLL:
+      // perimeter tracking roll
+      if (millis() >= stateEndTime) setNextState(STATE_PERI_FIND);
+      break;
+    case STATE_PERI_REV:
+      // perimeter tracking reverse
+      if (millis() >= stateEndTime) setNextState(STATE_PERI_ROLL);
+      break;
+    case STATE_PERI_FIND:
+      // find perimeter
+      if (motorLeftSpeedRpmSet == motorRightSpeedRpmSet) { // do not check during 'outside=>inside' rotation
+        checkCurrent();
+        checkBumpersPerimeter();
+        checkSonar();
+      }
+      checkPerimeterFind();
+      checkTimeout();
+      break;
+    case STATE_PERI_TRACK:
+      // track perimeter
+      checkCurrent();
+      checkBumpersPerimeter();
+      //checkSonar();
+      if (batMonitor) {
+        if (chgVoltage > 5.0) {
+          setNextState(STATE_STATION);
+        }
       }
       break;
 

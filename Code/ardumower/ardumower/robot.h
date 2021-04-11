@@ -135,7 +135,13 @@ enum
   STATE_REMOTE,  // model remote control (R/C)
   STATE_ERROR,            // error
   STATE_STATION_CHARGING, // recharge in Station
-  STATE_STATION    // in station
+  STATE_STATION,    // in station
+  STATE_PERI_FIND,
+  STATE_PERI_TRACK,
+  STATE_ROLL,
+  STATE_REVERSE,
+  STATE_PERI_ROLL,
+  STATE_PERI_REV
 };
 
 
@@ -195,7 +201,11 @@ class Robot
     int gpsSpeedIgnoreTime; // how long gpsSpeed is ignored when robot switches into a new STATE (in ms)
     int robotIsStuckCounter;
     // -------- odometry state --------------------------
+    int wheelDiameter     ;        // wheel diameter (mm)
     char twoWayOdometrySensorUse;   // use optional two-wire odometry sensor?
+    int odometryTicksPerRevolution ;   // encoder ticks per one full resolution
+    float odometryTicksPerCm ;  // encoder ticks per cm
+    float odometryWheelBaseCm ;    // wheel-to-wheel distance (cm)
     bool odometryRightSwapDir; // inverse right encoder direction?
     bool odometryLeftSwapDir;  // inverse left encoder direction?
     int odometryLeft;          // left wheel counter
@@ -327,6 +337,11 @@ class Robot
     // ------- perimeter state --------------------------
     Perimeter perimeter;
     char perimeterUse; // use perimeter?
+    int perimeterOutRollTimeMax ;   
+    int perimeterOutRollTimeMin ;
+    int perimeterOutRevTime  ;   
+    int perimeterTrackRollTime ; // perimeter tracking roll time (ms)
+    int perimeterTrackRevTime ; // perimeter tracking reverse time (ms)
     PID perimeterPID;       // perimeter PID controller
     int perimeterLeftMag;       // perimeter magnitude
     int perimeterRightMag;      // perimeter magnitude
@@ -563,6 +578,8 @@ class Robot
     //virtual void checkFreeWheel();
     //virtual void checkDrop(); // Dropsensor - Absturzsensor
     //virtual void checkPerimeterBoundary();
+    virtual void checkPerimeterFind();
+    virtual void checkBumpersPerimeter();
     //virtual void checkLawn();
     virtual void checkSonar();
     virtual void checkTilt();

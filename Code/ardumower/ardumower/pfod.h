@@ -120,7 +120,6 @@ class RemoteControl
     void sendOdometryMenu(boolean update);
     void sendRainMenu(boolean update);    
     void sendGPSMenu(boolean update);        
-    void sendDateTimeMenu(boolean update);
     void sendFactorySettingsMenu(boolean update);    
     void sendADCMenu(boolean update);
     
@@ -139,7 +138,6 @@ class RemoteControl
     void processRemoteMenu(String pfodCmd);      
     void processBatteryMenu(String pfodCmd);
     void processOdometryMenu(String pfodCmd);      
-    void processDateTimeMenu(String pfodCmd);
     void processFactorySettingsMenu(String pfodCmd); 
     void processInfoMenu(String pfodCmd);
 
